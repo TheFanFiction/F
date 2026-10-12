@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fan Fiction</title>
+    <style>
+        body {
+            background-color: #000; 
+            color: #fceea7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100dvh; 
+            width: 100vw;
+            font-family: 'Courier New', Courier, monospace;
+            touch-action: none;
+            overflow: hidden; 
+            
+            /* BLOQUEIA A SELEÇÃO DE TEXTO NA PÁGINA INTEIRA */
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            -moz-user-select: none;
+        }
+
+        /* IMPEDE QUE QUALQUER IMAGEM SEJA ARRASTADA */
+        img {
+            -webkit-user-drag: none;
+            user-drag: none;
+            pointer-events: none;
+        }
+
+        /* ECRÃS INICIAIS DA HISTÓRIA */
+        .screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            background-color: #1a1528;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .screen-overlay img {
+            width: 80%;
+            max-width: 800px;
+            height: 50vh;
+            object-fit: cover;
+            background-color: #2c2440;
+            border: 4px solid #5a4b80;
+            border-radius: 8px;
+            image-rendering: pixelated;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px #000;
+        }
+
+        p.story-text {
+            width: 80%;
+            max-width: 800px;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            background-color: #2c2440;
+            border: 3px solid #5a4b80;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        .btn-main {
+            background-color: #d1506b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8c2a41;
+        }
+
+        .btn-main:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        /* LAYOUT FULL SCREEN WIDE */
+        #gameContainer {
+            position: relative;
+            width: 100vw; 
+            height: 100dvh;
+            display: none;
+            overflow: hidden;
+            background-color: #0d0914;
+        }
+        
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; 
+            image-rendering: pixelated;
+            z-index: 1;
+        }
+
+        /* GIF DO TÚNEL */
+        #tunelGifOverlay {
+            position: absolute;
+            top: 15vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            height: 55vh;
+            object-fit: cover;
+            background-color: #2c2440;
+            border: 4px solid #5a4b80;
+            border-radius: 8px;
+            display: none;
+            z-index: 20;
+            image-rendering: pixelated;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        /* RETRATO COM MOLDURA PARA APRESENTAÇÃO */
+        #characterPortrait {
+            display: none;
+            position: absolute;
+            top: 15vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%; 
+            max-width: 800px; 
+            height: 55vh; 
+            object-fit: cover; 
+            background-color: #2c2440;
+            border: 4px solid #5a4b80;
+            border-radius: 8px;
+            image-rendering: pixelated;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 25;
+            
+            filter: grayscale(0%) contrast(100%) brightness(100%);
+            transition: filter 1.5s ease-in-out, opacity 0.8s ease-in-out;
+        }
+
+        #characterPortrait.sinistro {
+            filter: grayscale(100%) contrast(160%) brightness(70%) !important;
+        }
+
+        /* MOLDURA E RETRATO DO MINIGAME DO OUTRO PAI */
+        #portraitFrame {
+            display: none;
+            position: absolute;
+            top: 15vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%; 
+            max-width: 600px; 
+            height: 50vh; 
+            background-color: #2c2440;
+            border: 4px solid #5a4b80;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+            z-index: 25;
+            transition: transform 0.1s ease-in-out;
+        }
+
+        #outroPaiPortrait {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            image-rendering: pixelated;
+            border-radius: 4px; 
+            transition: opacity 0.15s ease-in-out, filter 0.15s ease-in-out; 
+        }
+
+        .escurecer-retrato {
+            filter: brightness(20%) contrast(150%) sepia(30%) grayscale(60%) !important;
+            opacity: 0.1 !important;
+        }
+
+        .jumpscare {
+            transform: translateX(-50%) scale(1.4) translateY(20px) !important;
+            z-index: 40 !important;
+        }
+
+        /* CAIXA DE DIÁLOGO FLUTUANTE DO JOGO NORMAL E BALÕES ESTILO COMIC */
+        #dialogBox {
+            position: absolute;
+            bottom: 50px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%; 
+            max-width: 800px;
+            min-width: 300px;
+            background-color: rgba(44, 36, 64, 0.9); 
+            border: 3px solid #5a4b80;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 16px;
+            color: #fceea7;
+            z-index: 30; 
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+            white-space: pre-wrap;
+        }
+
+        /* CAIXA DE DIÁLOGO DO OUTRO PAI (MINIGAME) */
+        #dialogBoxPai {
+            display: none; 
+            position: absolute;
+            top: 15vh;
+            left: 58%;
+            width: 35%;
+            min-width: 260px;
+            background-color: #fff;
+            border: 4px solid #000;
+            border-radius: 25px;
+            padding: 20px 25px;
+            font-size: 16px;
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+            z-index: 30;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+            white-space: pre-wrap;
+        }
+        #dialogBoxPai::before {
+            content: ""; position: absolute; bottom: -30px; left: 40px;
+            border-width: 30px 20px 0 0; border-style: solid; border-color: #000 transparent transparent transparent;
+        }
+        #dialogBoxPai::after {
+            content: ""; position: absolute; bottom: -23px; left: 44px;
+            border-width: 25px 13px 0 0; border-style: solid; border-color: #fff transparent transparent transparent;
+        }
+        
+        #dialogBoxPai.desespero::before { border-color: #ff0000 transparent transparent transparent; }
+        #dialogBoxPai.desespero::after { border-color: #000 transparent transparent transparent; }
+
+        /* BALÃO DA LALAI NO MINIGAME */
+        #dialogBoxLalai {
+            display: none; 
+            position: absolute;
+            top: 22vh;
+            right: 58%;
+            width: 30%;
+            min-width: 280px;
+            background-color: #fff;
+            border: 4px solid #000;
+            border-radius: 25px;
+            padding: 20px 25px;
+            font-size: 16px;
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+            z-index: 35;
+            box-shadow: -6px 6px 0px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+            white-space: pre-wrap;
+        }
+        #dialogBoxLalai::before {
+            content: ""; position: absolute; bottom: -30px; right: 40px;
+            border-width: 30px 0 0 20px; border-style: solid; border-color: #000 transparent transparent transparent;
+        }
+        #dialogBoxLalai::after {
+            content: ""; position: absolute; bottom: -23px; right: 44px;
+            border-width: 25px 0 0 13px; border-style: solid; border-color: #fff transparent transparent transparent;
+        }
+
+        /* EFEITO DE ESCURECER O CENÁRIO E RETRATO NO MINIGAME */
+        #gameCanvas {
+            transition: filter 1.5s ease-in-out;
+        }
+        #gameCanvas.obscuro {
+            filter: brightness(20%) contrast(150%) sepia(30%) grayscale(60%) !important;
+        }
+        /* CAIXA DE ESCOLHAS DO MINIGAME */
+        #choiceContainer {
+            position: absolute;
+            bottom: 30px; 
+            left: 50%;
+            transform: translateX(-50%);
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100; /* AUMENTAR O Z-INDEX PARA 100 PARA FICAR POR CIMA DE TUDO */
+            width: 80%;
+            max-width: 800px;
+            background-color: rgba(44, 36, 64, 0.95); 
+            border: 3px solid #5a4b80;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        .btn-choice {
+            background-color: rgba(20, 15, 35, 0.95);
+            color: #fceea7;
+            border: 2px solid #5a4b80;
+            padding: 12px 18px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 6px;
+            text-align: left;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .btn-choice:hover { background-color: #3b2f56; }
+        .btn-choice:active { transform: translateY(2px); background-color: #5a4b80; }
+
+        @keyframes tremer {
+            0% { transform: translate(2px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .desespero {
+            animation: tremer 0.1s infinite !important;
+            background-color: #000 !important; 
+            color: #ff0000 !important; 
+            border-color: #ff0000 !important;
+            font-size: 22px !important;
+            z-index: 50 !important; 
+        }
+        #dialogBox.desespero::before { border-color: #ff0000 transparent transparent transparent; }
+        #dialogBox.desespero::after { border-color: #000 transparent transparent transparent; }
+
+        @keyframes piscarLuz {
+            0% { opacity: 0; background-color: transparent; }
+            40% { opacity: 0.95; background-color: black; } 
+            60% { opacity: 0; background-color: transparent; } 
+            100% { opacity: 0.95; background-color: black; }
+        }
+
+        .strobe {
+            animation: piscarLuz 0.15s infinite !important; 
+            z-index: 60; 
+        }
+        
+        #flashScreen {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+            transition: opacity 0.1s;
+        }
+
+        /* INVENTÁRIO MAIOR */
+        #inventoryBox {
+            position: absolute;
+            top: 35px; 
+            left: 30px; 
+            z-index: 10;
+        }
+
+        #inventorySlot {
+            width: 55px;
+            height: 55px;
+            background-color: rgba(44, 36, 64, 0.6); 
+            border: 3px solid #5a4b80; 
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #inventorySlot img {
+            width: 38px;
+            height: 38px;
+            image-rendering: pixelated;
+            display: none; 
+        }
+
+        /* D-PAD EM CRUZ */
+        #joystickArea {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10;
+            opacity: 0.75;
+            transition: opacity 0.2s;
+        }
+        
+        #joystickArea:active {
+            opacity: 1;
+        }
+
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 65px); 
+            grid-template-rows: repeat(3, 65px);
+            gap: 0px; 
+            touch-action: none; 
+        }
+
+        .d-pad button {
+            background-color: rgba(90, 75, 128, 0.95);
+            color: #fceea7;
+            border: 1px solid rgba(44, 36, 64, 0.8);
+            font-size: 26px; 
+            user-select: none;
+        }
+        
+        .d-pad button:active {
+            background-color: rgba(120, 100, 165, 1);
+        }
+
+        #btnUp    { grid-column: 2; grid-row: 1; border-radius: 10px 10px 0 0; }
+        #btnLeft  { grid-column: 1; grid-row: 2; border-radius: 10px 0 0 10px; }
+        #btnRight { grid-column: 3; grid-row: 2; border-radius: 0 10px 10px 0; }
+        #btnDown  { grid-column: 2; grid-row: 3; border-radius: 0 0 10px 10px; }
+        .d-pad-center { grid-column: 2; grid-row: 2; background-color: rgba(70, 58, 100, 0.95); }
+
+        /* BOTÃO A */
+        .action-buttons {
+            position: absolute;
+            bottom: 60px; 
+            right: 40px;
+            z-index: 10;
+            opacity: 0.85;
+            transition: opacity 0.2s;
+        }
+
+        .action-buttons:active {
+            opacity: 1;
+        }
+
+        .btn-action {
+            background-color: #d1506b;
+            color: white;
+            border: 2px solid #8c2a41;
+            border-radius: 50%;
+            width: 85px;
+            height: 85px;
+            font-size: 36px;
+            font-weight: bold;
+            box-shadow: 0 5px 0 #8c2a41;
+            cursor: pointer;
+        }
+        
+        .btn-action:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="menuScreen" class="screen-overlay">
+        <img src="fanfic.png" alt="Casa Cor-de-Rosa">
+        <button class="btn-main" onclick="mostrarHistoria()">COMEÇAR JOGO</button>
+    </div>
+
+    <div id="storyScreen" class="screen-overlay" style="display: none;">
+        <h1>O INÍCIO DA AVENTURA</h1>
+        <p class="story-text">
+            Você se mudou recentemente para a misteriosa Casa Cor-de-Rosa com seus pais e seu fiel escudeiro, o Catie. Enquanto explorava os cantos sombrios da casa nova, algo chamou a sua atenção, uma parede com uma pequena porta secreta.
+        </p>
+        <button class="btn-main" onclick="iniciarJogoReal()">EXPLORAR A CASA</button>
+    </div>
+
+    <div id="gameContainer">
+        <!-- Canvas Wide 800x360 -->
+        <canvas id="gameCanvas" width="800" height="360"></canvas>
+        <div id="flashScreen"></div>
+        <img id="tunelGifOverlay" src="tunel.gif" alt="Túnel Coraline">
+
+        <!-- Retrato com moldura para a apresentação -->
+        <img id="characterPortrait" src="" alt="Retrato do Personagem">
+
+        <!-- Moldura e retrato para o minigame do Outro Pai -->
+        <div id="portraitFrame">
+            <img id="outroPaiPortrait" src="happy.png" alt="Outro Pai">
+        </div>
+
+        <!-- Inventário Maior -->
+        <div id="inventoryBox">
+            <div id="inventorySlot">
+                <img id="keyIcon" src="chave.png" alt="Chave">
+            </div>
+        </div>
+
+        <div id="dialogBoxLalai"></div>
+        <div id="dialogBoxPai"></div>
+        <div id="dialogBox">Explore a casa e veja o que o Catie descobre ao redor.</div>
+        <div id="choiceContainer"></div>
+        
+        <!-- D-Pad em Cruz -->
+        <div class="d-pad" id="joystickArea">
+            <button id="btnUp">▲</button>
+            <button id="btnLeft">◀</button>
+            <div class="d-pad-center"></div>
+            <button id="btnRight">▶</button>
+            <button id="btnDown">▼</button>
+        </div>
+        
+        <div class="action-buttons">
+            <button id="btnA" class="btn-action">A</button>
+        </div>
+    </div>
+
+    <script>
+        // BLOQUEIA O CLIQUE DIREITO (MENU DE CONTEXTO) EM TUDO
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // BLOQUEIA O ARRASTAMENTO DE IMAGENS E ELEMENTOS DO JOGO
+        document.addEventListener('dragstart', event => event.preventDefault());
+        const dialogBoxPai = document.getElementById('dialogBoxPai'); // ADICIONA JUNTO DAS OUTRAS VARIÁVEIS CONST
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const dialogBox = document.getElementById('dialogBox');
+        const dialogBoxLalai = document.getElementById('dialogBoxLalai');
+        const choiceContainer = document.getElementById('choiceContainer');
+        const keyIcon = document.getElementById('keyIcon');
+        const tunelGif = document.getElementById('tunelGifOverlay');
+        const charPortrait = document.getElementById('characterPortrait');
+        const portraitFrame = document.getElementById('portraitFrame');
+        const outroPaiPortrait = document.getElementById('outroPaiPortrait');
+        const flashScreen = document.getElementById('flashScreen');
+
+        let playerX = canvas.width / 2 - 32;
+        let playerY = 240;
+        let playerSpeed = 1.5; 
+        
+        let movingLeft = false, movingRight = false, movingUp = false, movingDown = false;
+        let isFacingLeft = false;
+        
+        let jaAvisoPorta = false; 
+        let avisoPortaFeito = false;
+        let missaoChaveAtiva = false;
+        let temChave = false;
+        let dialogoOutroPaiAtivo = false;
+        let passoDialogoPai = 0;
+        let chaveUsada = false; 
+        let emTransicao = false;
+        
+        let faseOutroMundo = false; 
+        let faseApresentacao = false;
+        let indiceApresentacao = 0;
+        let minigameOutroPaiAtivo = false;
+        let piadaAtual = 0;
+        let sustoEscadariaFeito = false;
+        let saiuDoMinigame = false;
+        let sustoOfficeFeito = false;
+        let jumpScareCenarioAtivo = false;
+        let missaoBobinskyAtiva = false;
+
+        const loopPiadas = [
+            "Sabia que você ia adorar! Aqui vai mais uma: Você sabe qual é a fruta que fica pulando de galho em galho? É o morangotango! HA HA HA!",
+            "Ah, esse seu sorriso aquece o meu coração! Aqui vai mais uma: Você sabe qual é a água mais rápida do mundo? A Aguinha Pocotó! HA HA HA! Entendeu? Pocotó!",
+            "Você é sempre meu melhor público! Deixa eu te contar outra então... Qual é o campeonato organizado apenas entre pessoas que não falam? É a Copa do Mudo! HA HA HA!"
+        ];
+
+        let isStepFrame = false;  
+        let animCounter = 0;      
+        let catieStepFrame = false;  
+        let catieAnimCounter = 0;   
+        let animandoChave = false;
+        let chaveY = 0;
+        let tempoAnimacaoChave = 0;
+
+        let timeouts = [];
+        let audioSuspenseCtx = null;
+        let suspenseGainNode = null;
+
+        function agendar(funcao, tempo) {
+            let t = setTimeout(funcao, tempo);
+            timeouts.push(t);
+        }
+        function limparAgendamentos() {
+            timeouts.forEach(clearTimeout);
+            timeouts = [];
+        }
+
+        // SISTEMA DE ÁUDIO DE SUSPENSE PARA O MINIGAME
+        function iniciarSomSuspense() {
+            pararSomSuspense();
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            audioSuspenseCtx = new AudioContext();
+
+            const osc1 = audioSuspenseCtx.createOscillator();
+            osc1.type = 'sawtooth';
+            osc1.frequency.setValueAtTime(48, audioSuspenseCtx.currentTime); 
+
+            const osc2 = audioSuspenseCtx.createOscillator();
+            osc2.type = 'sawtooth';
+            osc2.frequency.setValueAtTime(52, audioSuspenseCtx.currentTime); 
+
+            const filter = audioSuspenseCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(180, audioSuspenseCtx.currentTime);
+
+            suspenseGainNode = audioSuspenseCtx.createGain();
+            suspenseGainNode.gain.setValueAtTime(0, audioSuspenseCtx.currentTime);
+            suspenseGainNode.gain.linearRampToValueAtTime(0.5, audioSuspenseCtx.currentTime + 1.5); 
+
+            osc1.connect(filter);
+            osc2.connect(filter);
+            filter.connect(suspenseGainNode);
+            suspenseGainNode.connect(audioSuspenseCtx.destination);
+
+            osc1.start();
+            osc2.start();
+        }
+
+        function pararSomSuspense() {
+            if (audioSuspenseCtx && suspenseGainNode) {
+                try {
+                    suspenseGainNode.gain.linearRampToValueAtTime(0, audioSuspenseCtx.currentTime + 0.3);
+                    setTimeout(() => {
+                        if (audioSuspenseCtx.state !== 'closed') audioSuspenseCtx.close();
+                        audioSuspenseCtx = null;
+                        suspenseGainNode = null;
+                    }, 350);
+                } catch(e) {
+                    audioSuspenseCtx = null;
+                    suspenseGainNode = null;
+                }
+            }
+        }
+// VARIÁVEIS PARA O SOM AMBIENTE
+        let audioAmbienteCtx = null;
+        let ambienteGainNode = null;
+
+        // FUNÇÃO DO SOM AMBIENTE (Toca baixinho e continuamente)
+        function iniciarSomAmbienteOutroMundo() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            
+            // Se já estiver a tocar, não reinicia
+            if (audioAmbienteCtx) return; 
+
+            audioAmbienteCtx = new AudioContext();
+
+            // Oscilador 1: Som grave e profundo
+            const oscGrave = audioAmbienteCtx.createOscillator();
+            oscGrave.type = 'sine';
+            oscGrave.frequency.setValueAtTime(45, audioAmbienteCtx.currentTime); 
+
+            // Oscilador 2: Leve dissonância para incomodar
+            const oscDissonante = audioAmbienteCtx.createOscillator();
+            oscDissonante.type = 'triangle';
+            oscDissonante.frequency.setValueAtTime(55, audioAmbienteCtx.currentTime);
+
+            // Filtro para abafar o som (estilo "debaixo d'água" ou "lugar abafado")
+            const filter = audioAmbienteCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(200, audioAmbienteCtx.currentTime);
+
+            ambienteGainNode = audioAmbienteCtx.createGain();
+            ambienteGainNode.gain.setValueAtTime(0, audioAmbienteCtx.currentTime);
+            
+            // Sobe o volume bem devagar (3 segundos) para não assustar, mantendo bem baixo (0.15)
+            ambienteGainNode.gain.linearRampToValueAtTime(0.15, audioAmbienteCtx.currentTime + 3); 
+
+            oscGrave.connect(filter);
+            oscDissonante.connect(filter);
+            filter.connect(ambienteGainNode);
+            ambienteGainNode.connect(audioAmbienteCtx.destination);
+
+            oscGrave.start();
+            oscDissonante.start();
+        }
+        function tocarSomErro() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const audioCtx = new AudioContext();
+            for(let i=0; i<4; i++) {
+                setTimeout(() => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime); 
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
+                }, i * 300); 
+            }
+        }
+
+        function tocarSomSusto() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const audioCtx = new AudioContext();
+            const bufferSize = audioCtx.sampleRate * 1.5; 
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2); 
+            noise.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            noise.start();
+            const osc = audioCtx.createOscillator();
+            const oscGain = audioCtx.createGain();
+            osc.type = 'sawtooth'; 
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 1.0); 
+            oscGain.gain.setValueAtTime(1, audioCtx.currentTime);
+            oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+            osc.connect(oscGain);
+            oscGain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.5);
+        }
+
+        function dispararJumpscareCenario(imagemAssombrada) {
+            jumpScareCenarioAtivo = true; 
+            
+            const cenarioAntigo = mapaCasa[cenarioAtual].img;
+            mapaCasa[cenarioAtual].img = imagemAssombrada;
+            
+            tocarSomSusto();
+            flashScreen.classList.add("strobe");
+            
+            // O susto dura exatamente 800 milissegundos com a imagem assombrada e o piscar ativados em conjunto
+            setTimeout(() => {
+                mapaCasa[cenarioAtual].img = cenarioAntigo;
+                flashScreen.classList.remove("strobe");
+                
+                // Devolve o controlo e mostra o balão de texto instantaneamente sem pausas secas
+                jumpScareCenarioAtivo = false;
+                dialogBox.style.display = "block";
+                dialogBox.innerHTML = "Lalai: O... o que foi isso?!";
+            }, 800);
+        }
+
+        // IMAGENS DOS CENÁRIOS
+        const imgSala = new Image(); imgSala.src = 'sala.png'; 
+        const imgEscadaria = new Image(); imgEscadaria.src = 'escadaria.png'; 
+        const imgCozinha = new Image(); imgCozinha.src = 'kitchen.png'; 
+        const imgStorage = new Image(); imgStorage.src = 'storage.png'; 
+        const imgOffice = new Image(); imgOffice.src = 'office.png'; 
+        const imgOfficeAssombrado = new Image(); imgOfficeAssombrado.src = 'office assombrado.png'; 
+        const imgEscadariaAssombrada = new Image(); imgEscadariaAssombrada.src = 'escadaria assombrada.png';
+
+        // IMAGENS PERSONAGENS
+        const imgPlayer = new Image(); imgPlayer.src = 'principal.png'; 
+        const imgPlayerPasso = new Image(); imgPlayerPasso.src = 'principal_passo.png'; 
+        const imgDog = new Image(); imgDog.src = 'catie.png'; 
+        const imgDogPasso = new Image(); imgDogPasso.src = 'catie_passo.png';
+        const imgChave = new Image(); imgChave.src = 'chave.png';
+
+        const imgOutraMae = new Image(); imgOutraMae.src = 'outra_mae.png'; 
+        const imgOutraMaeReal = new Image(); imgOutraMaeReal.src = 'outra_mae_real.png';
+        const imgOutroPai = new Image(); imgOutroPai.src = 'outro_pai.png'; 
+        const imgBobinsky = new Image(); imgBobinsky.src = 'bobinsky.png';
+        const imgOutroPaiCorpo = new Image(); imgOutroPaiCorpo.src = 'outropai_personagem.png';
+
+        let dogX = playerX - 30;
+        let dogY = playerY + 20; 
+
+        // GESTOR DE CENÁRIOS, LIMITES E SPAWNS
+        let cenarioAtual = "escadaria"; // Inicia na escadaria
+
+        const mapaCasa = {
+            sala: {
+                img: imgSala,
+                limiteEsquerdo: 0,
+                limiteDireito: 730,
+                chao: 160,
+                portas: [
+                    { x: 0, largura: 80, destino: "escadaria", spawnX: 700, gatilho: "esquerda" } 
+                ],
+                npc: null
+            },
+            escadaria: {
+                img: imgEscadaria,
+                limiteEsquerdo: 10,   
+                limiteDireito: 720,   
+                chao: 160,        
+                portas: [
+                    { x: 70, largura: 60, destino: "storage", spawnX: 60, gatilho: "cima" },
+                    { x: 430, largura: 30, destino: "cozinha", spawnX: 20, gatilho: "cima" }, 
+                    { x: 670, largura: 60, destino: "sala", spawnX: 10, gatilho: "direita" }     
+                ],
+                npc: null
+            },
+            cozinha: {
+                img: imgCozinha,
+                limiteEsquerdo: 10,
+                limiteDireito: 690,
+                chao: 170,
+                portas: [
+                    { x: 0, largura: 70, destino: "escadaria", spawnX: 440, gatilho: "esquerda" } 
+                ],
+                npc: null
+            },
+            storage: {
+                img: imgOffice,
+                limiteEsquerdo: 50,
+                limiteDireito: 710,
+                chao: 170,
+                portas: [
+                    { x: 0, largura: 70, destino: "escadaria", spawnX: 130, gatilho: "cima" } 
+                ],
+                npc: {
+                    id: "outroPai",
+                    img: imgOutroPaiCorpo, 
+                    x: 550, 
+                    y: 110, 
+                    largura: 80,
+                    interagivel: true
+                }
+            }
+        };
+
+        // FUNÇÃO PARA MUDANÇA DE CENÁRIO POR BOTÃO DE MOVIMENTO OU AÇÃO
+        function tentarMudarCenario(teclaPressionada) {
+            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo) return; 
+
+            const salaDados = mapaCasa[cenarioAtual];
+
+            for (let i = 0; i < salaDados.portas.length; i++) {
+                let porta = salaDados.portas[i];
+                
+                if (playerX >= porta.x && playerX <= (porta.x + porta.largura)) {
+                    if (porta.gatilho === teclaPressionada || teclaPressionada === "acao") {
+                        
+                        cenarioAtual = porta.destino;
+                        playerX = porta.spawnX !== undefined ? porta.spawnX : 100;
+                        dogX = playerX + (isFacingLeft ? 65 : -65);
+                        
+                        // TEXTO DA LALAI QUANDO ENTRA NA OFFICE
+                        if (cenarioAtual === "storage" && chaveUsada) {
+                            dialogBox.style.display = "block";
+                            dialogBox.innerHTML = "Lalai: Ele está tão estranho... Por que ele está ali parado?";
+                        }
+
+                        return;
+                }
+            }
+        }
+        }
+
+        // FUNÇÃO PARA FALAR COM NPCS
+        function interagir() {
+            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo) return;
+
+            const salaAtual = mapaCasa[cenarioAtual];
+            
+            if (chaveUsada && salaAtual.npc && salaAtual.npc.interagivel) {
+                if (Math.abs(playerX - salaAtual.npc.x) < 80) {
+                    iniciarMinigameOutroPai();
+                    return; 
+                }
+            }
+
+            tentarMudarCenario("acao");
+        }
+function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
+            if (efeito === "susto") {
+                outroPaiPortrait.style.transition = "none"; 
+                outroPaiPortrait.src = novaSrc;
+                portraitFrame.classList.add("jumpscare"); 
+            } else if (efeito === "obscuro") {
+                outroPaiPortrait.style.transition = "opacity 0.75s ease-in-out, filter 0.75s ease-in-out";
+                outroPaiPortrait.classList.add("escurecer-retrato");
+                setTimeout(() => {
+                    outroPaiPortrait.src = novaSrc;
+                    outroPaiPortrait.classList.remove("escurecer-retrato"); 
+                    setTimeout(() => {
+                        outroPaiPortrait.style.transition = "opacity 0.15s ease-in-out, filter 0.15s ease-in-out";
+                    }, 750);
+                }, 750); 
+            } else {
+                if (outroPaiPortrait.src.includes(novaSrc)) return; 
+                outroPaiPortrait.style.transition = "opacity 0.15s ease-in-out, filter 0.15s ease-in-out";
+                outroPaiPortrait.classList.add("escurecer-retrato");
+                setTimeout(() => {
+                    outroPaiPortrait.src = novaSrc;
+                    outroPaiPortrait.classList.remove("escurecer-retrato");
+                }, 150); 
+            }
+        }
+        function iniciarMinigameOutroPai() {
+            minigameOutroPaiAtivo = true;
+            canvas.style.display = "none";
+            portraitFrame.style.display = "block";
+            
+            // ESCONDE OS CONTROLES DO JOGO
+            document.getElementById('joystickArea').style.display = 'none';
+            document.querySelector('.action-buttons').style.display = 'none';
+            
+            outroPaiPortrait.src = "happy.png"; 
+            dialogBoxLalai.style.display = "none"; 
+            
+            // Esconde a caixa roxa de exploração
+            dialogBox.style.display = "none"; 
+            
+            // --- NOVA LINHA: PARA O SOM AMBIENTE ASSUSTADOR QUANDO FALA COM ELE ---
+            if (ambienteGainNode && audioAmbienteCtx) {
+                try {
+                    ambienteGainNode.gain.linearRampToValueAtTime(0, audioAmbienteCtx.currentTime + 0.5);
+                    setTimeout(() => {
+                        if (audioAmbienteCtx.state !== 'closed') audioAmbienteCtx.close();
+                        audioAmbienteCtx = null;
+                        ambienteGainNode = null;
+                    }, 600);
+                } catch(e) {}
+            }
+            // ----------------------------------------------------------------------
+            
+            // MOSTRA O BALÃO BRANCO DO OUTRO PAI
+            dialogBoxPai.style.display = "block";
+            dialogBoxPai.innerHTML = "Ei, Lalai! Que bom que você está aqui. Quer ouvir uma piada, querida? Sabe o que o zero disse para o oito? 'Que belo cinto!' HA HA HA!";
+            
+            // CHAMA A FUNÇÃO QUE CRIA OS BOTÕES
+            mostrarOpcoesPrincipais();
+        }
+
+        // A FUNÇÃO RESTAURADA QUE FAZ AS OPÇÕES APARECEREM
+        function mostrarOpcoesPrincipais() {
+            choiceContainer.innerHTML = `
+                <button class="btn-choice" onclick="escolhaMinigame('A')">A) Forçar o riso</button>
+                <button class="btn-choice" onclick="escolhaMinigame('B')">B) Séria e direta</button>
+                <button class="btn-choice" onclick="escolhaMinigame('C')">C) Contar outra piada pra ele</button>
+            `;
+            choiceContainer.style.display = "flex";
+        }
+
+        window.escolhaMinigame = function(opcao) {
+            limparAgendamentos(); 
+            dialogBoxPai.style.display = "none"; 
+            
+            if (opcao !== 'C_SAIR' && opcao !== 'C_VOLTAR') {
+                dialogBoxLalai.style.display = "block"; 
+            }
+            
+            const fundoDaSala = document.getElementById('gameCanvas'); // Corrigido para afetar o canvas principal
+
+            if (opcao === 'A') {
+                pararSomSuspense();
+                mostrarOpcoesPrincipais(); 
+                fundoDaSala.classList.remove("obscuro"); 
+                dialogBoxLalai.innerHTML = "Haha... sim, muito engraçado."; 
+
+                agendar(() => {
+                    dialogBoxLalai.style.display = "none"; 
+                    agendar(() => {
+                        mudarRetratoOutroPai("happy.png"); 
+                        dialogBoxPai.innerHTML = loopPiadas[piadaAtual]; 
+                        dialogBoxPai.style.display = "block"; 
+                        piadaAtual++;
+                        if (piadaAtual >= loopPiadas.length) piadaAtual = 0; 
+                    }, 150); 
+                }, 3500); 
+            } 
+            else if (opcao === 'B') {
+                choiceContainer.innerHTML = `
+                    <button class="btn-choice" onclick="escolhaMinigame('B1')">Recuar e ouvir outra piada</button>
+                    <button class="btn-choice" onclick="escolhaMinigame('B2')">Sair daqui agora!</button>
+                `;
+                
+                dialogBoxLalai.innerHTML = "Eu preciso ir embora. Onde está a saída?"; 
+                fundoDaSala.classList.add("obscuro"); 
+                iniciarSomSuspense(); 
+                mudarRetratoOutroPai("sinister.png", "obscuro");
+                
+                agendar(() => {
+                    dialogBoxLalai.style.display = "none"; 
+                    agendar(() => {
+                        dialogBoxPai.innerHTML = "Ir... embora? Mas este mundo foi costurado à sua medida. A sua Outra Mãe não gosta de crianças ingratas, Lalai. A ingratidão estraga a perfeição.";
+                        dialogBoxPai.style.display = "block"; 
+                    }, 200); 
+                }, 4500); 
+            }
+            else if (opcao === 'B1') {
+                pararSomSuspense();
+                mostrarOpcoesPrincipais(); 
+                dialogBoxLalai.innerHTML = "Tem razão... acho que prefiro ouvir mais uma piada.";
+                
+                fundoDaSala.classList.remove("obscuro"); 
+                mudarRetratoOutroPai("happy.png", "obscuro"); 
+
+                agendar(() => {
+                    dialogBoxLalai.style.display = "none"; 
+                    agendar(() => {
+                        dialogBoxPai.innerHTML = "Ah, muito melhor!<br><br>" + loopPiadas[piadaAtual];
+                        dialogBoxPai.style.display = "block"; 
+                        piadaAtual++;
+                        if (piadaAtual >= loopPiadas.length) piadaAtual = 0; 
+                    }, 200); 
+                }, 4500);
+            }
+            else if (opcao === 'B2') {
+                pararSomSuspense();
+                choiceContainer.style.display = "none"; 
+                dialogBoxLalai.style.display = "none"; 
+                
+                tocarSomErro();
+                
+                // AGORA O BALÃO MANTÉM A POSIÇÃO ORIGINAL, EXATAMENTE COMO NO TESTE
+                dialogBoxPai.innerHTML = "A n o r m a l i d a d e   D e t e c t a d a.";
+                dialogBoxPai.style.display = "block";
+                
+                agendar(() => {
+                    tocarSomSusto(); 
+                    
+                    mudarRetratoOutroPai("jumpscare.png", "susto"); 
+                    dialogBoxPai.classList.add("desespero");
+                    dialogBoxPai.innerHTML = "ElA Te OuViu!!!!";
+                    flashScreen.classList.add("strobe");
+                    
+                    agendar(() => {
+                        flashScreen.classList.remove("strobe");
+                        flashScreen.style.transition = "none"; 
+                        flashScreen.style.backgroundColor = "#000";
+                        flashScreen.style.opacity = "1";
+                        dialogBoxPai.style.display = "none";
+                        dialogBoxPai.classList.remove("desespero");
+                        
+                        portraitFrame.classList.remove("jumpscare"); // Remove o efeito de susto da moldura!
+                        portraitFrame.style.display = "none"; 
+                        
+                        agendar(() => {
+                            flashScreen.style.transition = "opacity 1s ease-in-out";
+                            flashScreen.style.opacity = "0";
+
+                            minigameOutroPaiAtivo = false;
+                            canvas.style.display = "block";
+                            
+                            document.getElementById('joystickArea').style.display = 'grid';
+                            document.querySelector('.action-buttons').style.display = 'block';
+                            
+                            cenarioAtual = "escadaria";
+                            playerX = 100; 
+                            playerY = 160;
+                            saiuDoMinigame = false;
+                            
+                            fundoDaSala.classList.remove("obscuro");
+
+                            dialogBox.style.display = "block";
+                            dialogBox.innerHTML = "Lalai: Por pouco... Preciso ter cuidado com o que digo a ele.";
+                            
+                            updateGame();
+                        }, 1000);
+                    }, 2200); 
+                }, 1800); 
+            }
+            else if (opcao === 'C') {
+                pararSomSuspense();
+                choiceContainer.innerHTML = `
+                    <button class="btn-choice" onclick="escolhaMinigame('C_SAIR')">Sair</button>
+                    <button class="btn-choice" onclick="escolhaMinigame('C_VOLTAR')">Continuar falando com o Outro Pai</button>
+                `;
+                
+                dialogBoxLalai.innerHTML = "Sabe qual documento o Thor usa pra provar que é quem diz ser?<br>O título de <i>ele é Thor</i>."; 
+                
+                agendar(() => {
+                    dialogBoxLalai.style.display = "none"; 
+                    agendar(() => {
+                        mudarRetratoOutroPai("confused.png"); 
+                        dialogBoxPai.innerHTML = "Thor? Ele... eleitor? Mas... Essa piada não faz sentido, nós não precisamos de eleições aqui, Lalai. A sua Outra Mãe já foi escolhida para sempre... <br><br>Não fale bobagens igual aquele Bobinsky, que fica resmungando pelos tubos que é o único que sabe como navegar pelas fendas deste Outro Mundo. Que bobagem! Se quer conversar com alguém tão fora da caixa, vá contar essa piada a ele!";
+                        dialogBoxPai.style.display = "block";
+                    }, 150);
+                }, 6000);
+            }
+            else if (opcao === 'C_SAIR') {
+                pararSomSuspense();
+                minigameOutroPaiAtivo = false;
+                choiceContainer.style.display = "none";
+                dialogBoxLalai.style.display = "none";
+                dialogBoxPai.style.display = "none"; 
+                portraitFrame.style.display = "none";
+                canvas.style.display = "block";
+                
+                document.getElementById('joystickArea').style.display = 'grid';
+                document.querySelector('.action-buttons').style.display = 'block';
+                
+                playerX = 400;
+                saiuDoMinigame = false; 
+                
+                missaoBobinskyAtiva = true;
+                
+                dialogBox.style.display = "block";
+                dialogBox.innerHTML = "Lalai: Preciso encontrar o Sr. Bobinsky e descobrir sobre essas fendas...";
+                updateGame();
+            }
+            else if (opcao === 'C_VOLTAR') {
+                pararSomSuspense();
+                mostrarOpcoesPrincipais(); 
+                dialogBoxLalai.style.display = "none";
+                mudarRetratoOutroPai("happy.png"); 
+                
+                dialogBoxPai.innerHTML = "Mas enfim... onde estávamos? Ah, sim! " + loopPiadas[piadaAtual];
+                dialogBoxPai.style.display = "block";
+
+                piadaAtual++;
+                if (piadaAtual >= loopPiadas.length) piadaAtual = 0; 
+            }
+        };
+
+        function mostrarHistoria() {
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('storyScreen').style.display = 'flex';
+        }
+
+        function iniciarJogoReal() {
+            document.getElementById('storyScreen').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block'; 
+            updateGame(); 
+        }
+
+        function tocarSomItem() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const audioCtx = new AudioContext();
+            const notas = [523.25, 659.25, 783.99, 1046.50]; 
+            let tempoAtual = audioCtx.currentTime;
+            
+            notas.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.value = freq;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(tempoAtual + i * 0.1);
+                gain.gain.setValueAtTime(0.1, tempoAtual + i * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, tempoAtual + i * 0.1 + 0.1);
+                osc.stop(tempoAtual + i * 0.1 + 0.1);
+            });
+        }
+
+        function desenharImagem(img, x, y, width, height, espelhar) {
+            ctx.save();
+            if (espelhar) {
+                ctx.translate(x + width / 2, y + height / 2);
+                ctx.scale(-1, 1);
+                ctx.drawImage(img, -width / 2, -height / 2, width, height);
+            } else {
+                ctx.drawImage(img, x, y, width, height);
+            }
+            ctx.restore();
+        }
+
+        function iniciarAnimacaoTunel() {
+            emTransicao = true;
+            dialogBox.style.display = "none";
+            canvas.style.display = "none";
+            
+            tunelGif.style.display = "block";
+            tunelGif.src = "tunel.gif?" + new Date().getTime();
+
+            setTimeout(() => {
+                tunelGif.style.display = "none";
+                canvas.style.display = "block";
+                
+                faseOutroMundo = true; 
+                faseApresentacao = true; 
+                indiceApresentacao = 1; 
+                emTransicao = false;
+                
+                ctx.imageSmoothingEnabled = false;
+                ctx.fillStyle = "#0d0914";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                charPortrait.style.display = "none";
+
+                dialogBox.style.display = "flex";
+                dialogBox.innerHTML = "Lalai: Há portas que jamais deveriam ser abertas... e eu acabei de abrir uma delas.";
+                
+                // INICIA O SOM AMBIENTE GRAVE DE SUSPENSE
+                iniciarSomAmbienteOutroMundo();
+            }, 3000); 
+        }
+
+        function updateGame() {
+            // VERIFICAÇÃO DE PROXIMIDADE AUTOMÁTICA COM O OUTRO PAI NO OFFICE
+            if (cenarioAtual === "storage" && chaveUsada && mapaCasa[cenarioAtual].npc && !minigameOutroPaiAtivo) {
+                let npc = mapaCasa[cenarioAtual].npc;
+                if (Math.abs(playerX - npc.x) < 90) {
+                    iniciarMinigameOutroPai();
+                }
+            }
+            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo) return; 
+
+            let isMoving = false;
+
+            // FORÇA A VELOCIDADE A SER EXTREMAMENTE LENTA NO OUTRO MUNDO (0.4) E NORMAL FORA DELE (1.5)
+            if (faseOutroMundo) {
+                playerSpeed = 0.30;
+            } else {
+                playerSpeed = 1.0;
+            }
+
+            if (movingLeft) { playerX -= playerSpeed; isFacingLeft = true; isMoving = true; }
+            if (movingRight) { playerX += playerSpeed; isFacingLeft = false; isMoving = true; }
+            if (movingUp) { playerY -= playerSpeed; isMoving = true; }
+            if (movingDown) { playerY += playerSpeed; isMoving = true; }
+
+            if (isMoving) {
+                animCounter++;
+                if (animCounter > 15) { 
+                    isStepFrame = !isStepFrame;
+                    animCounter = 0;
+                }
+            } else {
+                isStepFrame = false; 
+                animCounter = 0;
+            }
+            // SENSOR 1: Escadaria Assombrada (Dispara apenas quando ela avança da esquerda para a direita)
+            if (faseOutroMundo && cenarioAtual === "escadaria" && !sustoEscadariaFeito && !jumpScareCenarioAtivo) {
+                // Ajustado para disparar mais à frente (entre 350 e 400), garantindo que ela já saiu do ponto de spawn
+                if (playerX > 350 && playerX < 400) {
+                    sustoEscadariaFeito = true; 
+                    movingLeft = false; movingRight = false; movingUp = false; movingDown = false; 
+                    dispararJumpscareCenario(imgEscadariaAssombrada);
+                }
+            }
+
+            // SENSOR 2: Office Assombrado (Só dispara se a missão do Bobinsky estiver ativa)
+            if (faseOutroMundo && cenarioAtual === "storage" && !sustoOfficeFeito && !jumpScareCenarioAtivo) {
+                // Exige que a missão esteja ativa E que a Lalai caminhe para a porta (X < 300 e movingLeft)
+                if (missaoBobinskyAtiva && playerX < 300 && movingLeft) {
+                    sustoOfficeFeito = true; 
+                    movingLeft = false; movingRight = false; movingUp = false; movingDown = false; 
+                    dispararJumpscareCenario(imgOfficeAssombrado);
+                }
+            }
+
+            let currentImgPlayer = isStepFrame ? imgPlayerPasso : imgPlayer;
+            let dogPosOffset = isFacingLeft ? 65 : -65;
+
+            // REGRAS DE COLISÃO E LIMITES DINÂMICOS DO CENÁRIO ATUAL
+            let salaDados = mapaCasa[cenarioAtual];
+            let limiteChao = salaDados.chao; // Lê apenas a altura real definida no mapa
+            
+            if (playerX < salaDados.limiteEsquerdo) playerX = salaDados.limiteEsquerdo;
+            if (playerX > salaDados.limiteDireito) playerX = salaDados.limiteDireito;
+            
+            if (playerY < limiteChao) playerY = limiteChao; 
+            if (playerY > canvas.height - 90) playerY = canvas.height - 90;
+
+            // MISSÃO DA CHAVE E PORTA SECRETA (EXECUTA APENAS UMA VEZ EM TODO O JOGO)
+            if (cenarioAtual === "sala" && !faseOutroMundo) {
+                if (playerX > 640) { 
+                    // Verificamos se !avisoPortaFeito é verdadeiro. Se já foi ativado antes, isto dá falso e nunca mais entra.
+                    if (!temChave && !avisoPortaFeito) {
+                        avisoPortaFeito = true; // Marca imediatamente para nunca mais repetir
+                        dialogBox.innerHTML = "Catie: Au au!";
+                        missaoChaveAtiva = true; 
+
+                        setTimeout(() => {
+                            if (cenarioAtual === "sala" && !temChave && !chaveUsada && !faseOutroMundo) {
+                                dialogBox.innerHTML = "Lalai: Tem algo estranho com essa porta... onde estará a chave?";
+                                
+                                setTimeout(() => {
+                                    if (cenarioAtual === "sala" && !temChave && !chaveUsada && !faseOutroMundo) {
+                                        dialogBox.innerHTML = "Encontre a chave";
+                                    }
+                                }, 2500); 
+                            }
+                        }, 1500); 
+                    }
+                }
+            }
+
+            if (cenarioAtual === "cozinha" && missaoChaveAtiva && !temChave && !faseOutroMundo) {
+                if (dialogBox.innerHTML.indexOf("chave") === -1) {
+                    dialogBox.innerHTML = "Encontre a chave"; 
+                }
+            }
+
+            let posicaoAlvoCao = playerX + dogPosOffset;
+            let dogMovendo = Math.abs(posicaoAlvoCao - dogX) > 0.5 || Math.abs((playerY + 25) - dogY) > 0.5;
+
+            dogX += (posicaoAlvoCao - dogX) * 0.1; 
+            dogY += ((playerY + 25) - dogY) * 0.1;
+
+            if (dogMovendo) {
+                catieAnimCounter++;
+                if (catieAnimCounter > 15) { 
+                    catieStepFrame = !catieStepFrame;
+                    catieAnimCounter = 0;
+                }
+            } else {
+                catieStepFrame = false;
+                catieAnimCounter = 0;
+            }
+
+            let currentImgDog = catieStepFrame ? imgDogPasso : imgDog;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.imageSmoothingEnabled = false; 
+            
+            let cenarioARenderizar = mapaCasa[cenarioAtual].img;
+            
+            ctx.save(); 
+            
+            if (chaveUsada && !jumpScareCenarioAtivo) {
+                ctx.filter = "brightness(55%) contrast(130%) sepia(20%)";
+            } else {
+                ctx.filter = "none"; 
+            }
+            
+            ctx.drawImage(cenarioARenderizar, 0, 0, canvas.width, canvas.height);
+
+            if (chaveUsada && mapaCasa[cenarioAtual].npc) {
+                let npc = mapaCasa[cenarioAtual].npc;
+                desenharImagem(npc.img, npc.x, npc.y, 110, 190, false); 
+            }
+
+            desenharImagem(currentImgDog, dogX, dogY, 120, 120, isFacingLeft); 
+            desenharImagem(currentImgPlayer, playerX, playerY, 120, 120, isFacingLeft);
+            
+            ctx.restore(); 
+
+            if (animandoChave) {
+                tempoAnimacaoChave++;
+                chaveY -= 1.5; 
+
+                ctx.save();
+                let opacidade = 1 - (tempoAnimacaoChave / 60);
+                if (opacidade < 0) opacidade = 0;
+                ctx.globalAlpha = opacidade;
+
+                ctx.drawImage(imgChave, playerX + 20, chaveY, 24, 24); 
+
+                ctx.fillStyle = "#ffffff";
+                if (tempoAnimacaoChave % 10 < 5) {
+                    ctx.fillRect(playerX + 15, chaveY + 5, 4, 4);
+                    ctx.fillRect(playerX + 35, chaveY + 15, 4, 4);
+                } else {
+                    ctx.fillRect(playerX + 10, chaveY + 20, 4, 4);
+                    ctx.fillRect(playerX + 40, chaveY + 5, 4, 4);
+                }
+                ctx.restore();
+
+                if (tempoAnimacaoChave > 60) {
+                    animandoChave = false; 
+                }
+            }
+
+            requestAnimationFrame(updateGame);
+        }
+
+        // CONTROLOS TÁTEIS E MÚLTIPLOS TOQUES (D-PAD)
+        ['Up', 'Left', 'Right', 'Down'].forEach(direcao => {
+            const btn = document.getElementById('btn' + direcao);
+            const varName = 'moving' + direcao;
+            const teclaGatilho = direcao === 'Up' ? 'cima' : (direcao === 'Left' ? 'esquerda' : (direcao === 'Right' ? 'direita' : 'baixo'));
+
+            btn.addEventListener('touchstart', (e) => { 
+                e.preventDefault(); 
+                eval(varName + ' = true;'); 
+                tentarMudarCenario(teclaGatilho); 
+            });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); eval(varName + ' = false;'); });
+            
+            btn.addEventListener('mousedown', () => { 
+                eval(varName + ' = true;'); 
+                tentarMudarCenario(teclaGatilho); 
+            });
+            btn.addEventListener('mouseup', () => { eval(varName + ' = false;'); });
+            btn.addEventListener('mouseleave', () => { eval(varName + ' = false;'); });
+        });
+
+        // Eventos de Teclado (PC)
+        window.addEventListener('keydown', (e) => {
+            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo || jumpScareCenarioAtivo) return;
+
+            let direcaoIntencao = ""; 
+
+            if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { 
+                movingLeft = true; 
+                direcaoIntencao = "esquerda"; 
+            }
+            if(e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { 
+                movingRight = true; 
+                direcaoIntencao = "direita"; 
+            }
+            if(e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { 
+                movingUp = true; 
+                direcaoIntencao = "cima"; 
+            }
+            if(e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { 
+                movingDown = true; 
+                direcaoIntencao = "baixo"; 
+            }
+            
+            if (direcaoIntencao !== "" && direcaoIntencao !== "baixo") {
+                tentarMudarCenario(direcaoIntencao);
+            }
+
+            if(e.key === 'e' || e.key === 'E' || e.key === ' ') { 
+                interagir(); 
+            } 
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') movingLeft = false;
+            if(e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') movingRight = false;
+            if(e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') movingUp = false;
+            if(e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') movingDown = false;
+        });
+
+        // AÇÃO DO BOTÃO A
+        document.getElementById('btnA').addEventListener('click', () => {
+            if (emTransicao || minigameOutroPaiAtivo) return;
+
+            if (faseApresentacao) {
+                indiceApresentacao++;
+                if (indiceApresentacao === 2) {
+                    charPortrait.style.opacity = "1"; charPortrait.src = "casa.png";
+                    charPortrait.classList.remove("sinistro"); charPortrait.style.display = "block";
+                    dialogBox.innerHTML = "Lalai: No início, tudo parecia um sonho encantador...";
+                } else if (indiceApresentacao === 3) {
+                    charPortrait.classList.add("sinistro");
+                    dialogBox.innerHTML = "Lalai: Mas algo sombrio habitava naquela casa.";
+                } else if (indiceApresentacao === 4) {
+                    charPortrait.style.opacity = "1"; charPortrait.src = imgBobinsky.src;
+                    charPortrait.classList.remove("sinistro");
+                    dialogBox.innerHTML = "Lalai: o Sr. Bobinsky era o mesmo vizinho excêntrico das acrobacias...";
+                } else if (indiceApresentacao === 5) {
+                    charPortrait.classList.add("sinistro");
+                    dialogBox.innerHTML = "Lalai: Mas havia algo de estranho em como ele sempre repetia as mesmas coisas...";
+                } else if (indiceApresentacao === 6) {
+                    charPortrait.style.opacity = "1"; charPortrait.src = imgOutroPai.src;
+                    charPortrait.classList.remove("sinistro");
+                    dialogBox.innerHTML = "Lalai: O Outro Pai também era o mesmo, sempre pronto para disparar piadas...";
+                } else if (indiceApresentacao === 7) {
+                    charPortrait.classList.add("sinistro");
+                    dialogBox.innerHTML = "Lalai: Mas as piadas dele pareciam ensaiadas... quase como um fantoche.";
+                } else if (indiceApresentacao === 8) {
+                    charPortrait.style.opacity = "1"; charPortrait.src = imgOutraMae.src;
+                    charPortrait.classList.remove("sinistro");
+                    dialogBox.innerHTML = "Lalai: Estranhamente, a Outra Mãe estava sempre sorridente...";
+                } else if (indiceApresentacao === 9) {
+                    charPortrait.style.opacity = "1"; charPortrait.src = imgOutraMaeReal.src; 
+                    charPortrait.classList.add("sinistro");
+                    dialogBox.innerHTML = "Lalai: Mas aos poucos percebi a verdade... este mundo inteiro é controlado por ela, uma cópia distorcida feita para me prender aqui para sempre.";
+                } else if (indiceApresentacao === 10) {
+                    charPortrait.style.display = "none"; 
+                    charPortrait.classList.remove("sinistro"); 
+                    charPortrait.style.opacity = "1";
+                    
+                    faseApresentacao = false;
+                    cenarioAtual = "sala";
+                    playerX = 100;
+                    
+                    dialogBox.innerHTML = "Lalai: Preciso descobrir como escapar daqui... vou explorar os cômodos para ver se encontro alguém que possa me ajudar.";
+                    
+                    updateGame(); 
+                }
+                return;
+            }   
+
+            if (chaveUsada && cenarioAtual !== "sala") {
+                dialogBox.innerHTML = "Lalai: Este lugar é estranho... devo explorar.";
+            }
+
+            // TENTA APANHAR A CHAVE NA COZINHA
+            if (cenarioAtual === "cozinha" && missaoChaveAtiva && !temChave && !faseOutroMundo) {
+                if (playerX > 400) { 
+                    temChave = true;
+                    dialogBox.innerHTML = "Lalai: Achei a chave!";
+                    keyIcon.style.display = "block";
+                    animandoChave = true;
+                    tempoAnimacaoChave = 0;
+                    chaveY = playerY - 20; 
+                    tocarSomItem(); 
+                    return; 
+                } else {
+                    dialogBox.innerHTML = "Lalai: A chave deve estar no outro canto da cozinha...";
+                    return; 
+                }
+            }
+
+            // TENTA ABRIR A PORTA SECRETA NA SALA COM A CHAVE
+            if (cenarioAtual === "sala" && playerX > 640 && !faseOutroMundo) {
+                if (temChave && !chaveUsada) {
+                    chaveUsada = true; 
+                    keyIcon.style.display = "none"; 
+                    iniciarAnimacaoTunel();
+                    return;
+                } else if (!temChave) {
+                    dialogBox.innerHTML = "Lalai: Tem algo estranho com essa porta, onde estará a chave?";
+                    return;
+                }
+            }
+
+            interagir();
+        });
+    </script>
+</body>
+</html>
