@@ -54,15 +54,16 @@
 
         .screen-overlay img {
             width: 80%;
-            max-width: 800px;
-            height: 50vh;
-            object-fit: cover;
-            background-color: #2c2440;
-            border: 4px solid #5a4b80;
-            border-radius: 8px;
+            max-width: 600px;
+            height: 45vh; /* Mantém a altura fixa da moldura */
+            object-fit: contain; /* Faz a imagem caber inteira sem cortar as bordas */
+            background-color: #2c2440; /* Mantém o fundo da moldura */
+            border: 4px solid #5a4b80; /* Mantém a borda roxa original */
+            border-radius: 8px; /* Mantém os cantos arredondados */
             image-rendering: pixelated;
             margin-bottom: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-sizing: border-box;
         }
 
         h1 {
@@ -246,26 +247,35 @@
             z-index: 40 !important;
         }
 
-        /* CAIXA DE DIÁLOGO FLUTUANTE DO JOGO NORMAL E BALÕES ESTILO COMIC */
         #dialogBox {
             position: absolute;
-            bottom: 50px; 
+            bottom: 20px; 
             left: 50%;
             transform: translateX(-50%);
-            width: 80%; 
-            max-width: 800px;
-            min-width: 300px;
-            background-color: rgba(44, 36, 64, 0.9); 
+            width: 55%; /* Largura mais controlada para dar espaço aos botões nas laterais */
+            max-width: 550px;
+            min-width: 240px;
+            background-color: rgba(44, 36, 64, 0.95); 
             border: 3px solid #5a4b80;
             border-radius: 8px;
-            padding: 15px;
-            font-size: 16px;
+            padding: 12px 15px;
+            font-size: 14px;
             color: #fceea7;
             z-index: 30; 
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             box-sizing: border-box;
             white-space: pre-wrap;
+        }
+
+        /* Ajuste automático extra para ecrãs na vertical (modo retrato) */
+        @media (max-aspect-ratio: 1/1) {
+            #dialogBox {
+                width: 60%;
+                bottom: 15px;
+                font-size: 13px;
+                padding: 10px;
+            }
         }
 
         /* CAIXA DE DIÁLOGO DO OUTRO PAI (MINIGAME) */
@@ -1130,7 +1140,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 dialogBoxLalai.style.display = "block"; 
             }
             
-            const fundoDaSala = document.getElementById('gameCanvas'); // Corrigido para afetar o canvas principal
+            const fundoDaSala = document.getElementById('gameCanvas');
 
             if (opcao === 'A') {
                 pararSomSuspense();
@@ -1152,7 +1162,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             else if (opcao === 'B') {
                 choiceContainer.innerHTML = `
                     <button class="btn-choice" onclick="escolhaMinigame('B1')">Recuar e ouvir outra piada</button>
-                    <button class="btn-choice" onclick="escolhaMinigame('B2')">Sair daqui agora!</button>
+                    <button class="btn-choice" onclick="escolhaMinigame('B2')">Quero sair daqui agora!</button>
                 `;
                 
                 dialogBoxLalai.innerHTML = "Eu preciso ir embora. Onde está a saída?"; 
@@ -1246,21 +1256,193 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             }
             else if (opcao === 'C') {
                 pararSomSuspense();
-                choiceContainer.innerHTML = `
-                    <button class="btn-choice" onclick="escolhaMinigame('C_SAIR')">Sair</button>
-                    <button class="btn-choice" onclick="escolhaMinigame('C_VOLTAR')">Continuar falando com o Outro Pai</button>
-                `;
+                choiceContainer.style.display = "none";
+                dialogBoxPai.style.display = "none";
                 
+                dialogBoxLalai.style.display = "block";
                 dialogBoxLalai.innerHTML = "Sabe qual documento o Thor usa pra provar que é quem diz ser?<br>O título de <i>ele é Thor</i>."; 
                 
                 agendar(() => {
                     dialogBoxLalai.style.display = "none"; 
                     agendar(() => {
                         mudarRetratoOutroPai("confused.png"); 
-                        dialogBoxPai.innerHTML = "Thor? Ele... eleitor? Mas... Essa piada não faz sentido, nós não precisamos de eleições aqui, Lalai. A sua Outra Mãe já foi escolhida para sempre... <br><br>Não fale bobagens igual aquele Bobinsky, que fica resmungando pelos tubos que é o único que sabe como navegar pelas fendas deste Outro Mundo. Que bobagem! Se quer conversar com alguém tão fora da caixa, vá contar essa piada a ele!";
+                        dialogBoxPai.innerHTML = "Thor? Ele... eleitor? Mas... Essa piada não faz sentido, nós não precisamos de eleições ou escolhas aqui, Lalai. A sua Outra Mãe já organizou tudo para que este mundo seja perfeito para você.";
                         dialogBoxPai.style.display = "block";
+
+                        choiceContainer.innerHTML = `
+                            <button class="btn-choice" onclick="escolhaMinigame('C1')">Insistir: se ninguém escolhe nada aqui, não é possível mudar de ideia?</button>
+                            <button class="btn-choice" onclick="escolhaMinigame('C2')">Concordar: É... acho que você tem razão, as coisas já são perfeitas assim.</button>
+                        `;
+                        choiceContainer.style.display = "flex";
                     }, 150);
-                }, 6000);
+                }, 4500);
+            }
+            else if (opcao === 'C1') {
+                choiceContainer.style.display = "none";
+                dialogBoxPai.style.display = "none";
+
+                dialogBoxLalai.style.display = "block";
+                dialogBoxLalai.innerHTML = "Eleitor? Não, eu disse Thor, o herói. Mas falando de escolhas... se ninguém escolhe nada aqui, não é possível mudar de ideia?";
+
+                agendar(() => {
+                    dialogBoxLalai.style.display = "none";
+                    agendar(() => {
+                        mudarRetratoOutroPai("happy.png");
+                        dialogBoxPai.innerHTML = "Aqui nós não mudamos de ideias, querida. As ideias já vêm prontas, costuradas com todo o carinho. Queres ouvir mais uma das minhas?";
+                        dialogBoxPai.style.display = "block";
+
+                        choiceContainer.innerHTML = `
+                            <button class="btn-choice" onclick="escolhaMinigame('C1_A')">Confrontar diretamente</button>
+                            <button class="btn-choice" onclick="escolhaMinigame('C1_B')">Disfarçar com ironia</button>
+                        `;
+                        choiceContainer.style.display = "flex";
+                    }, 150);
+                }, 5000);
+            }
+            else if (opcao === 'C1_A') {
+                choiceContainer.style.display = "none";
+                dialogBoxPai.style.display = "none";
+
+                dialogBoxLalai.style.display = "block";
+                dialogBoxLalai.innerHTML = "Ideias prontas soam como prisão! Quem decide o que é perfeito e o que não é?";
+
+                agendar(() => {
+                    dialogBoxLalai.style.display = "none";
+                    agendar(() => {
+                        mudarRetratoOutroPai("sinister.png", "obscuro"); 
+                        dialogBoxPai.innerHTML = "A sua Outra Mãe não gosta de crianças ingratas, Lalai. A ingratidão estraga a perfeição.";
+                        dialogBoxPai.style.display = "block";
+
+                        agendar(() => {
+                            dialogBoxPai.innerHTML = "A n o r m a l i d a d e  D e t e c t a d a.";
+
+                            agendar(() => {
+                                tocarSomSusto();
+                                mudarRetratoOutroPai("jumpscare.png", "susto");
+                                dialogBoxPai.classList.add("desespero");
+                                dialogBoxPai.innerHTML = "ElA Te OuViu!!!!";
+                                flashScreen.classList.add("strobe");
+
+                                agendar(() => {
+                                    flashScreen.classList.remove("strobe");
+                                    flashScreen.style.transition = "none"; 
+                                    flashScreen.style.backgroundColor = "#000";
+                                    flashScreen.style.opacity = "1";
+                                    dialogBoxPai.style.display = "none";
+                                    dialogBoxPai.classList.remove("desespero");
+                                    
+                                    portraitFrame.classList.remove("jumpscare"); 
+                                    portraitFrame.style.display = "none"; 
+                                    
+                                    agendar(() => {
+                                        flashScreen.style.transition = "opacity 1s ease-in-out";
+                                        flashScreen.style.opacity = "0";
+
+                                        minigameOutroPaiAtivo = false;
+                                        canvas.style.display = "block";
+                                        
+                                        document.getElementById('joystickArea').style.display = 'grid';
+                                        document.querySelector('.action-buttons').style.display = 'block';
+                                        
+                                        cenarioAtual = "escadaria";
+                                        playerX = 100; 
+                                        playerY = 160;
+                                        saiuDoMinigame = false;
+                                        
+                                        fundoDaSala.classList.remove("obscuro");
+
+                                        dialogBox.style.display = "block";
+                                        dialogBox.innerHTML = "Lalai: Por pouco... Preciso ter cuidado com o que digo a ele.";
+                                        updateGame();
+                                    }, 1000);
+                                }, 2200);
+                            }, 1800);
+                        }, 3500);
+                    }, 150);
+                }, 3500);
+            }
+            else if (opcao === 'C1_B') {
+                choiceContainer.style.display = "none";
+                dialogBoxPai.style.display = "none";
+
+                dialogBoxLalai.style.display = "block";
+                dialogBoxLalai.innerHTML = "Essas costuras parecem estar apertando um pouco a sua cabeça, não acha? haha";
+
+                agendar(() => {
+                    dialogBoxLalai.style.display = "none";
+                    agendar(() => {
+                        mudarRetratoOutroPai("happy.png");
+                        dialogBoxPai.innerHTML = "Apertando minha cabeça? Que piada curiosa! Mas falando em piadas, deixa-me contar outra...";
+                        dialogBoxPai.style.display = "block";
+                        
+                        agendar(() => {
+                            mostrarOpcoesPrincipais();
+                        }, 3000);
+                    }, 150);
+                }, 4000);
+            }
+            else if (opcao === 'C2') {
+                choiceContainer.style.display = "none";
+                dialogBoxPai.style.display = "none";
+
+                dialogBoxLalai.style.display = "block";
+                dialogBoxLalai.innerHTML = "É... acho que você tem razão, as coisas já são perfeitas assim.";
+
+                agendar(() => {
+                    dialogBoxLalai.style.display = "none";
+                    agendar(() => {
+                        mudarRetratoOutroPai("happy.png");
+                        dialogBoxPai.innerHTML = "Não é? Você deve sempre concordar conosco, querida! Fique sempre onde meus olhos conseguem te ver e evite certas companhias que possam bagunçar a sua mente com ideias estranhas.";
+                        dialogBoxPai.style.display = "block";
+
+                        choiceContainer.innerHTML = `
+                            <button class="btn-choice" onclick="escolhaMinigame('C2_A')">Curiosidade sobre companhias</button>
+                            <button class="btn-choice" onclick="escolhaMinigame('C2_B')">Mudar de assunto</button>
+                        `;
+                        choiceContainer.style.display = "flex";
+                    }, 150);
+                }, 4500);
+            }
+            else if (opcao === 'C2_A') {
+                choiceContainer.style.display = "none";
+                dialogBoxPai.style.display = "none";
+
+                dialogBoxLalai.style.display = "block";
+                dialogBoxLalai.innerHTML = "Quais companhias são essas que eu deveria evitar?";
+
+                agendar(() => {
+                    dialogBoxLalai.style.display = "none";
+                    agendar(() => {
+                        mudarRetratoOutroPai("confused.png");
+                        dialogBoxPai.innerHTML = "Quem mais poderia ser? Não fale bobagens igual aquele Bobinsky, que fica resmungando pelos tubos que é o único que sabe como navegar pelas fendas deste Outro Mundo. Que bobagem!";
+                        dialogBoxPai.style.display = "block";
+
+                        choiceContainer.innerHTML = `
+                            <button class="btn-choice" onclick="escolhaMinigame('C_SAIR')">Afastar-se e procurar o Sr. Bobinsky</button>
+                        `;
+                        choiceContainer.style.display = "flex";
+                    }, 150);
+                }, 4000);
+            }
+            else if (opcao === 'C2_B') {
+                choiceContainer.style.display = "none";
+                dialogBoxPai.style.display = "none";
+
+                dialogBoxLalai.style.display = "block";
+                dialogBoxLalai.innerHTML = "Esqueça isso... conte-me outra piada, por favor.";
+
+                agendar(() => {
+                    dialogBoxLalai.style.display = "none";
+                    agendar(() => {
+                        mudarRetratoOutroPai("happy.png");
+                        dialogBoxPai.innerHTML = "Outra piada? Ah, sim... aqui tudo é eternamente perfeito, a felicidade sempre vem em primeiro lugar!";
+                        dialogBoxPai.style.display = "block";
+                        
+                        agendar(() => {
+                            mostrarOpcoesPrincipais();
+                        }, 3000);
+                    }, 150);
+                }, 4000);
             }
             else if (opcao === 'C_SAIR') {
                 pararSomSuspense();
@@ -1388,9 +1570,9 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
             // FORÇA A VELOCIDADE A SER EXTREMAMENTE LENTA NO OUTRO MUNDO (0.4) E NORMAL FORA DELE (1.5)
             if (faseOutroMundo) {
-                playerSpeed = 0.50;
+                playerSpeed = 0.45;
             } else {
-                playerSpeed = 1.5;
+                playerSpeed = 1.4;
             }
 
             if (movingLeft) { playerX -= playerSpeed; isFacingLeft = true; isMoving = true; }
