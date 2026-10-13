@@ -142,7 +142,47 @@
             image-rendering: pixelated;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
+#portraitContainer {
+            display: none;
+            position: absolute;
+            top: 15vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%; 
+            max-width: 800px; 
+            height: 55vh; 
+            background-color: #2c2440;
+            border: 4px solid #5a4b80;
+            border-radius: 8px;
+            overflow: hidden; /* Garante que nada sai de dentro da moldura */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 25;
+        }
 
+        #portraitContainer img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            image-rendering: pixelated;
+            filter: grayscale(0%) contrast(100%) brightness(100%);
+        }
+
+        #portraitContainer img.sinistro {
+            filter: grayscale(100%) contrast(160%) brightness(70%) !important;
+            transition: filter 1.2s ease-in-out !important;
+        }
+
+        #imgTopo {
+            clip-path: inset(0 0 100% 0); 
+            transition: clip-path 1.4s ease-in-out, filter 1.4s ease-in-out !important;
+        }
+
+        #imgTopo.sinistro {
+            filter: grayscale(100%) contrast(160%) brightness(70%) !important;
+        }
         /* RETRATO COM MOLDURA PARA APRESENTAÇÃO */
         #characterPortrait {
             display: none;
@@ -500,8 +540,11 @@
         <div id="flashScreen"></div>
         <img id="tunelGifOverlay" src="tunel.gif" alt="Túnel Coraline">
 
-        <!-- Retrato com moldura para a apresentação -->
-        <img id="characterPortrait" src="" alt="Retrato do Personagem">
+        <!-- Contentor do Retrato com suporte a sobreposição para o efeito de varredura -->
+        <div id="portraitContainer">
+            <img id="imgFundo" src="" alt="Fundo">
+            <img id="imgTopo" src="" alt="Topo">
+        </div>
 
         <!-- Moldura e retrato para o minigame do Outro Pai -->
         <div id="portraitFrame">
@@ -548,7 +591,9 @@
         const choiceContainer = document.getElementById('choiceContainer');
         const keyIcon = document.getElementById('keyIcon');
         const tunelGif = document.getElementById('tunelGifOverlay');
-        const charPortrait = document.getElementById('characterPortrait');
+        const portraitContainer = document.getElementById('portraitContainer');
+        const imgFundo = document.getElementById('imgFundo');
+        const imgTopo = document.getElementById('imgTopo');
         const portraitFrame = document.getElementById('portraitFrame');
         const outroPaiPortrait = document.getElementById('outroPaiPortrait');
         const flashScreen = document.getElementById('flashScreen');
@@ -656,6 +701,7 @@
         }
         let mundoRealCtx = null;
         let mundoRealInterval = null;
+        let mundoRealGainNode = null; // <--- Adicionado para controlar o volume/fade
 
         function iniciarMusicaMundoReal() {
             if (mundoRealCtx) return;
@@ -663,31 +709,33 @@
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             mundoRealCtx = new AudioContext();
             
-            // Progressão de acordes nostálgica e suave (C - Am - F - G adaptada para arpejo)
+            mundoRealGainNode = mundoRealCtx.createGain();
+            mundoRealGainNode.gain.setValueAtTime(0.15, mundoRealCtx.currentTime); // Volume inicial
+            mundoRealGainNode.connect(mundoRealCtx.destination);
+
             const notasMelodia = [
-                261.63, 329.63, 392.00, 523.25, // Dó maior (C)
-                220.00, 261.63, 329.63, 440.00, // Lá menor (Am)
-                174.61, 220.00, 261.63, 349.23, // Fá maior (F)
-                196.00, 246.94, 293.66, 392.00  // Sol maior (G)
+                261.63, 329.63, 392.00, 523.25, 
+                220.00, 261.63, 329.63, 440.00, 
+                174.61, 220.00, 261.63, 349.23, 
+                196.00, 246.94, 293.66, 392.00  
             ];
             let passoMelodia = 0;
             
             function tocarPassoLoFi() {
                 if (!mundoRealCtx) return;
                 
-                // --- 1. A MELODIA SUAVE (Tipo piano/caixinha aconchegante) ---
                 const osc = mundoRealCtx.createOscillator();
-                const gain = mundoRealCtx.createGain();
+                const noteGain = mundoRealCtx.createGain();
                 
-                osc.type = 'triangle'; // Onda 'triangle' dá um som mais quente e abafado que o 'sine'
+                osc.type = 'triangle'; 
                 osc.frequency.setValueAtTime(notasMelodia[passoMelodia], mundoRealCtx.currentTime);
                 
-                gain.gain.setValueAtTime(0, mundoRealCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.15, mundoRealCtx.currentTime + 0.05);
-                gain.gain.exponentialRampToValueAtTime(0.001, mundoRealCtx.currentTime + 0.8); 
+                noteGain.gain.setValueAtTime(0, mundoRealCtx.currentTime);
+                noteGain.gain.linearRampToValueAtTime(1.0, mundoRealCtx.currentTime + 0.05);
+                noteGain.gain.exponentialRampToValueAtTime(0.001, mundoRealCtx.currentTime + 0.8); 
                 
-                osc.connect(gain);
-                gain.connect(mundoRealCtx.destination);
+                osc.connect(noteGain);
+                noteGain.connect(mundoRealGainNode); // Liga ao ganho principal do mundo real
                 
                 osc.start();
                 osc.stop(mundoRealCtx.currentTime + 0.9);
@@ -696,9 +744,20 @@
                 if (passoMelodia >= notasMelodia.length) passoMelodia = 0;
             }
             
-            // Ritmo constante (tipo o compasso suave da música que ouviste)
             tocarPassoLoFi();
-            mundoRealInterval = setInterval(tocarPassoLoFi, 400); // 400ms por nota dá um andamento calmo e ritmado
+            mundoRealInterval = setInterval(tocarPassoLoFi, 400); 
+        }
+
+        // FADE OUT SUAVE DA MÚSICA DO MUNDO REAL (Dura 2 segundos)
+        function fadeOutMusicaMundoReal() {
+            if (mundoRealCtx && mundoRealGainNode) {
+                mundoRealGainNode.gain.linearRampToValueAtTime(0.001, mundoRealCtx.currentTime + 2.0);
+                setTimeout(() => {
+                    pararMusicaMundoReal();
+                }, 2000);
+            } else {
+                pararMusicaMundoReal();
+            }
         }
 
         function pararMusicaMundoReal() {
@@ -709,6 +768,7 @@
             if (mundoRealCtx) {
                 mundoRealCtx.close();
                 mundoRealCtx = null;
+                mundoRealGainNode = null;
             }
         }
         // FUNÇÃO DO SOM AMBIENTE (Toca baixinho e continuamente)
@@ -770,8 +830,8 @@
             osc2.frequency.setValueAtTime(150, audioCtx.currentTime);
             osc2.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.6);
             
-            // Volume máximo (0.7) para dar aquele impacto forte que sobressalta o jogador
-            gain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+            // Volume máximo (0.6) para dar aquele impacto forte que sobressalta o jogador
+            gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
             
             osc1.connect(gain);
@@ -806,12 +866,18 @@
         let temaOutroMundoCtx = null;
         let temaInterval = null;
 
-        
         function iniciarTemaCaixinhaDeMusica() {
             if (temaOutroMundoCtx) return;
             
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             temaOutroMundoCtx = new AudioContext();
+            
+            // Criamos um ganho mestre para o Outro Mundo para fazer o Fade In
+            const masterGain = temaOutroMundoCtx.createGain();
+            masterGain.gain.setValueAtTime(0.001, temaOutroMundoCtx.currentTime);
+            // Sobe o volume suavemente ao longo de 3 segundos enquanto o túnel roda
+            masterGain.gain.linearRampToValueAtTime(0.3, temaOutroMundoCtx.currentTime + 3.0);
+            masterGain.connect(temaOutroMundoCtx.destination);
             
             const melodia = [329.63, 392.00, 493.88, 392.00, 261.63, 329.63, 392.00, 329.63];
             let notaAtual = 0;
@@ -830,7 +896,7 @@
                 gain.gain.exponentialRampToValueAtTime(0.001, temaOutroMundoCtx.currentTime + 3.0); 
                 
                 osc.connect(gain);
-                gain.connect(temaOutroMundoCtx.destination);
+                gain.connect(masterGain); // Liga ao ganho com fade in
                 
                 osc.start();
                 osc.stop(temaOutroMundoCtx.currentTime + 3.5);
@@ -1265,13 +1331,17 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 osc.stop(tempoAtual + i * 0.1 + 0.1);
             });
         }
-function iniciarAnimacaoTunel() {
+            function iniciarAnimacaoTunel() {
             emTransicao = true;
-            pararMusicaMundoReal();
+            fadeOutMusicaMundoReal();
+
             dialogBox.style.display = "none";
             canvas.style.display = "none";
+            
             tunelGif.style.display = "block";
             tunelGif.src = "tunel.gif?" + new Date().getTime();
+
+            iniciarTemaCaixinhaDeMusica();
 
             setTimeout(() => {
                 tunelGif.style.display = "none";
@@ -1279,21 +1349,18 @@ function iniciarAnimacaoTunel() {
                 
                 faseOutroMundo = true; 
                 faseApresentacao = true; 
-                indiceApresentacao = 1; 
+                indiceApresentacao = 0; // <--- Começa em 0
                 emTransicao = false;
                 
                 ctx.imageSmoothingEnabled = false;
                 ctx.fillStyle = "#0d0914";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                charPortrait.style.display = "none";
+                portraitContainer.style.display = "none";
 
                 dialogBox.style.display = "flex";
-                dialogBox.innerHTML = "Lalai: Há portas que jamais deveriam ser abertas... e eu acabei de abrir uma delas.";
-                
-                // INICIA O TEMA DA CAIXINHA DE MÚSICA AQUI
-                iniciarTemaCaixinhaDeMusica();
-            }, 3000); 
+                dialogBox.innerHTML = "Lalai: Há portas que jamais deveriam ser abertas... e eu acabei de abrir uma delas."; // <--- Frase reposta
+            }, 3000);
         }
         function desenharImagem(img, x, y, width, height, espelhar) {
             ctx.save();
@@ -1321,7 +1388,7 @@ function iniciarAnimacaoTunel() {
 
             // FORÇA A VELOCIDADE A SER EXTREMAMENTE LENTA NO OUTRO MUNDO (0.4) E NORMAL FORA DELE (1.5)
             if (faseOutroMundo) {
-                playerSpeed = 0.30;
+                playerSpeed = 0.45;
             } else {
                 playerSpeed = 1.0;
             }
@@ -1545,50 +1612,75 @@ function iniciarAnimacaoTunel() {
 
             if (faseApresentacao) {
                 indiceApresentacao++;
-                if (indiceApresentacao === 2) {
-                    charPortrait.style.opacity = "1"; charPortrait.src = "casa.png";
-                    charPortrait.classList.remove("sinistro"); charPortrait.style.display = "block";
+                
+                // Reseta sempre as imagens por padrão para os passos normais
+                imgTopo.style.transition = "none";
+                imgTopo.style.clipPath = "inset(0 0 100% 0)";
+                imgTopo.src = "";
+
+                imgFundo.style.transition = "none";
+                imgFundo.className = "";
+                void imgFundo.offsetWidth;
+                imgFundo.style.transition = "filter 1.2s ease-in-out";
+
+                if (indiceApresentacao === 1) {
+                    portraitContainer.style.display = "block";
+                    imgFundo.src = "casa.png";
                     dialogBox.innerHTML = "Lalai: No início, tudo parecia um sonho encantador...";
-                } else if (indiceApresentacao === 3) {
-                    charPortrait.classList.add("sinistro");
+                } else if (indiceApresentacao === 2) {
+                    imgFundo.className = "sinistro";
                     dialogBox.innerHTML = "Lalai: Mas algo sombrio habitava naquela casa.";
-                } else if (indiceApresentacao === 4) {
-                    charPortrait.style.opacity = "1"; charPortrait.src = imgBobinsky.src;
-                    charPortrait.classList.remove("sinistro");
+                } else if (indiceApresentacao === 3) {
+                    imgFundo.src = imgBobinsky.src;
                     dialogBox.innerHTML = "Lalai: o Sr. Bobinsky era o mesmo vizinho excêntrico das acrobacias...";
-                } else if (indiceApresentacao === 5) {
-                    charPortrait.classList.add("sinistro");
+                } else if (indiceApresentacao === 4) {
+                    imgFundo.className = "sinistro";
                     dialogBox.innerHTML = "Lalai: Mas havia algo de estranho em como ele sempre repetia as mesmas coisas...";
-                } else if (indiceApresentacao === 6) {
-                    charPortrait.style.opacity = "1"; charPortrait.src = imgOutroPai.src;
-                    charPortrait.classList.remove("sinistro");
+                } else if (indiceApresentacao === 5) {
+                    imgFundo.src = imgOutroPai.src;
                     dialogBox.innerHTML = "Lalai: O Outro Pai também era o mesmo, sempre pronto para disparar piadas...";
-                } else if (indiceApresentacao === 7) {
-                    charPortrait.classList.add("sinistro");
+                } else if (indiceApresentacao === 6) {
+                    imgFundo.className = "sinistro";
                     dialogBox.innerHTML = "Lalai: Mas as piadas dele pareciam ensaiadas... quase como um fantoche.";
-                } else if (indiceApresentacao === 8) {
-                    charPortrait.style.opacity = "1"; charPortrait.src = imgOutraMae.src;
-                    charPortrait.classList.remove("sinistro");
+                } else if (indiceApresentacao === 7) {
+                    imgFundo.src = imgOutraMae.src;
                     dialogBox.innerHTML = "Lalai: Estranhamente, a Outra Mãe estava sempre sorridente...";
-                } else if (indiceApresentacao === 9) {
-                    charPortrait.style.opacity = "1"; charPortrait.src = imgOutraMaeReal.src; 
-                    charPortrait.classList.add("sinistro");
+                } else if (indiceApresentacao === 8) {
+                    // Garante que o fundo fica com a imagem normal da Outra Mãe limpa
+                    imgFundo.src = imgOutraMae.src;
+                    imgFundo.className = ""; 
+                    imgFundo.style.filter = "none";
+
+                    // Configura a imagem do topo (Bela Dama real) para começar colorida e sem filtro
+                    imgTopo.src = imgOutraMaeReal.src;
+                    imgTopo.className = ""; 
+                    imgTopo.style.transition = "none";
+                    imgTopo.style.filter = "grayscale(0%) contrast(100%) brightness(100%)";
+                    imgTopo.style.clipPath = "inset(0 0 100% 0)"; // Começa cortada em cima
+
+                    setTimeout(() => {
+                        // Ativa simultaneamente a descida (clip-path) e a transição gradual do filtro para cinzento/escuro SOMENTE na Bela Dama
+                        imgTopo.style.transition = "clip-path 1.4s ease-in-out, filter 1.4s ease-in-out";
+                        imgTopo.style.filter = "grayscale(100%) contrast(160%) brightness(70%)";
+                        imgTopo.style.clipPath = "inset(0 0 0% 0)"; 
+                    }, 50);
+
                     dialogBox.innerHTML = "Lalai: Mas aos poucos percebi a verdade... este mundo inteiro é controlado por ela, uma cópia distorcida feita para me prender aqui para sempre.";
-                } else if (indiceApresentacao === 10) {
-                    charPortrait.style.display = "none"; 
-                    charPortrait.classList.remove("sinistro"); 
-                    charPortrait.style.opacity = "1";
+                    return;
+                } else if (indiceApresentacao === 9) {
+                    portraitContainer.style.display = "none"; 
+                    imgFundo.className = "";
+                    imgTopo.className = "";
                     
                     faseApresentacao = false;
                     cenarioAtual = "sala";
                     playerX = 100;
                     
                     dialogBox.innerHTML = "Lalai: Preciso descobrir como escapar daqui... vou explorar os cômodos para ver se encontro alguém que possa me ajudar.";
-                    
                     updateGame(); 
                 }
                 return;
-            }   
+            }
 
             if (chaveUsada && cenarioAtual !== "sala") {
                 dialogBox.innerHTML = "Lalai: Este lugar é estranho... devo explorar.";
@@ -1625,7 +1717,7 @@ function iniciarAnimacaoTunel() {
             }
 
             interagir();
-        }
+        }  
 
         // Ligar a função ao Botão A identificando o 'Toque' real no ecrã e não um clique virtual
         const btnA = document.getElementById('btnA');
