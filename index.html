@@ -654,10 +654,63 @@
                 }
             }
         }
-// VARIÁVEIS PARA O SOM AMBIENTE
-        let audioAmbienteCtx = null;
-        let ambienteGainNode = null;
+        let mundoRealCtx = null;
+        let mundoRealInterval = null;
 
+        function iniciarMusicaMundoReal() {
+            if (mundoRealCtx) return;
+            
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            mundoRealCtx = new AudioContext();
+            
+            // Progressão de acordes nostálgica e suave (C - Am - F - G adaptada para arpejo)
+            const notasMelodia = [
+                261.63, 329.63, 392.00, 523.25, // Dó maior (C)
+                220.00, 261.63, 329.63, 440.00, // Lá menor (Am)
+                174.61, 220.00, 261.63, 349.23, // Fá maior (F)
+                196.00, 246.94, 293.66, 392.00  // Sol maior (G)
+            ];
+            let passoMelodia = 0;
+            
+            function tocarPassoLoFi() {
+                if (!mundoRealCtx) return;
+                
+                // --- 1. A MELODIA SUAVE (Tipo piano/caixinha aconchegante) ---
+                const osc = mundoRealCtx.createOscillator();
+                const gain = mundoRealCtx.createGain();
+                
+                osc.type = 'triangle'; // Onda 'triangle' dá um som mais quente e abafado que o 'sine'
+                osc.frequency.setValueAtTime(notasMelodia[passoMelodia], mundoRealCtx.currentTime);
+                
+                gain.gain.setValueAtTime(0, mundoRealCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.15, mundoRealCtx.currentTime + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, mundoRealCtx.currentTime + 0.8); 
+                
+                osc.connect(gain);
+                gain.connect(mundoRealCtx.destination);
+                
+                osc.start();
+                osc.stop(mundoRealCtx.currentTime + 0.9);
+                
+                passoMelodia++;
+                if (passoMelodia >= notasMelodia.length) passoMelodia = 0;
+            }
+            
+            // Ritmo constante (tipo o compasso suave da música que ouviste)
+            tocarPassoLoFi();
+            mundoRealInterval = setInterval(tocarPassoLoFi, 400); // 400ms por nota dá um andamento calmo e ritmado
+        }
+
+        function pararMusicaMundoReal() {
+            if (mundoRealInterval) {
+                clearInterval(mundoRealInterval);
+                mundoRealInterval = null;
+            }
+            if (mundoRealCtx) {
+                mundoRealCtx.close();
+                mundoRealCtx = null;
+            }
+        }
         // FUNÇÃO DO SOM AMBIENTE (Toca baixinho e continuamente)
         function iniciarSomAmbienteOutroMundo() {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -697,6 +750,39 @@
             oscGrave.start();
             oscDissonante.start();
         }
+        function tocarSomSusto() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const audioCtx = new AudioContext();
+            
+            // Duas ondas combinadas para criar um som metálico, estridente e aterrorizante
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc1.type = 'sawtooth';
+            osc2.type = 'square';
+            
+            // Começa agudo e desce brutalmente para um grave pesado
+            osc1.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.6);
+            
+            osc2.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc2.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.6);
+            
+            // Volume máximo (0.7) para dar aquele impacto forte que sobressalta o jogador
+            gain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+            
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc1.start();
+            osc2.start();
+            osc1.stop(audioCtx.currentTime + 0.6);
+            osc2.stop(audioCtx.currentTime + 0.6);
+        }
         function tocarSomErro() {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
@@ -717,33 +803,55 @@
             }
         }
 
-        function tocarSomSusto() {
+        let temaOutroMundoCtx = null;
+        let temaInterval = null;
+
+        
+        function iniciarTemaCaixinhaDeMusica() {
+            if (temaOutroMundoCtx) return;
+            
             const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const audioCtx = new AudioContext();
-            const bufferSize = audioCtx.sampleRate * 1.5; 
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-            const noiseGain = audioCtx.createGain();
-            noiseGain.gain.setValueAtTime(0.6, audioCtx.currentTime);
-            noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2); 
-            noise.connect(noiseGain);
-            noiseGain.connect(audioCtx.destination);
-            noise.start();
-            const osc = audioCtx.createOscillator();
-            const oscGain = audioCtx.createGain();
-            osc.type = 'sawtooth'; 
-            osc.frequency.setValueAtTime(200, audioCtx.currentTime); 
-            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 1.0); 
-            oscGain.gain.setValueAtTime(1, audioCtx.currentTime);
-            oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-            osc.connect(oscGain);
-            oscGain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 1.5);
+            temaOutroMundoCtx = new AudioContext();
+            
+            const melodia = [329.63, 392.00, 493.88, 392.00, 261.63, 329.63, 392.00, 329.63];
+            let notaAtual = 0;
+            
+            function tocarNota() {
+                if (!temaOutroMundoCtx) return;
+                
+                const osc = temaOutroMundoCtx.createOscillator();
+                const gain = temaOutroMundoCtx.createGain();
+                
+                osc.type = 'sine'; 
+                osc.frequency.setValueAtTime(melodia[notaAtual], temaOutroMundoCtx.currentTime);
+                
+                gain.gain.setValueAtTime(0, temaOutroMundoCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.3, temaOutroMundoCtx.currentTime + 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.001, temaOutroMundoCtx.currentTime + 3.0); 
+                
+                osc.connect(gain);
+                gain.connect(temaOutroMundoCtx.destination);
+                
+                osc.start();
+                osc.stop(temaOutroMundoCtx.currentTime + 3.5);
+                
+                notaAtual++;
+                if (notaAtual >= melodia.length) notaAtual = 0;
+            }
+            
+            tocarNota();
+            temaInterval = setInterval(tocarNota, 1500);
+        }
+
+        function pararTemaCaixinhaDeMusica() {
+            if (temaInterval) {
+                clearInterval(temaInterval);
+                temaInterval = null;
+            }
+            if (temaOutroMundoCtx) {
+                temaOutroMundoCtx.close();
+                temaOutroMundoCtx = null;
+            }
         }
 
         function dispararJumpscareCenario(imagemAssombrada) {
@@ -930,19 +1038,6 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             // Esconde a caixa roxa de exploração
             dialogBox.style.display = "none"; 
             
-            // --- NOVA LINHA: PARA O SOM AMBIENTE ASSUSTADOR QUANDO FALA COM ELE ---
-            if (ambienteGainNode && audioAmbienteCtx) {
-                try {
-                    ambienteGainNode.gain.linearRampToValueAtTime(0, audioAmbienteCtx.currentTime + 0.5);
-                    setTimeout(() => {
-                        if (audioAmbienteCtx.state !== 'closed') audioAmbienteCtx.close();
-                        audioAmbienteCtx = null;
-                        ambienteGainNode = null;
-                    }, 600);
-                } catch(e) {}
-            }
-            // ----------------------------------------------------------------------
-            
             // MOSTRA O BALÃO BRANCO DO OUTRO PAI
             dialogBoxPai.style.display = "block";
             dialogBoxPai.innerHTML = "Ei, Lalai! Que bom que você está aqui. Quer ouvir uma piada, querida? Sabe o que o zero disse para o oito? 'Que belo cinto!' HA HA HA!";
@@ -1027,13 +1122,13 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             }
             else if (opcao === 'B2') {
                 pararSomSuspense();
+                pararTemaCaixinhaDeMusica();
                 choiceContainer.style.display = "none"; 
-                dialogBoxLalai.style.display = "none"; 
+                dialogBoxLalai.style.display = "none";
                 
                 tocarSomErro();
                 
-                // AGORA O BALÃO MANTÉM A POSIÇÃO ORIGINAL, EXATAMENTE COMO NO TESTE
-                dialogBoxPai.innerHTML = "A n o r m a l i d a d e   D e t e c t a d a.";
+                dialogBoxPai.innerHTML = "A n o r m a l i d a d e  D e t e c t a d a.";
                 dialogBoxPai.style.display = "block";
                 
                 agendar(() => {
@@ -1052,7 +1147,9 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                         dialogBoxPai.style.display = "none";
                         dialogBoxPai.classList.remove("desespero");
                         
-                        portraitFrame.classList.remove("jumpscare"); // Remove o efeito de susto da moldura!
+                        dialogBoxLalai.style.display = "none"; 
+                        
+                        portraitFrame.classList.remove("jumpscare"); 
                         portraitFrame.style.display = "none"; 
                         
                         agendar(() => {
@@ -1075,6 +1172,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                             dialogBox.style.display = "block";
                             dialogBox.innerHTML = "Lalai: Por pouco... Preciso ter cuidado com o que digo a ele.";
                             
+                            iniciarTemaCaixinhaDeMusica(); 
                             updateGame();
                         }, 1000);
                     }, 2200); 
@@ -1093,7 +1191,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                     dialogBoxLalai.style.display = "none"; 
                     agendar(() => {
                         mudarRetratoOutroPai("confused.png"); 
-                        dialogBoxPai.innerHTML = "Thor? Ele... eleitor? Mas... Essa piada não faz sentido, nós não precisamos disso aqui, Lalai. A sua Outra Mãe já foi escolhida para sempre... <br><br>Não fale bobagens igual aquele Bobinsky, que fica resmungando pelos tubos que é o único que sabe como navegar pelas fendas deste Outro Mundo. Que bobagem! Se quer conversar com alguém tão fora da caixa, vá contar essa piada a ele!";
+                        dialogBoxPai.innerHTML = "Thor? Ele... eleitor? Mas... Essa piada não faz sentido, nós não precisamos de eleições aqui, Lalai. A sua Outra Mãe já foi escolhida para sempre... <br><br>Não fale bobagens igual aquele Bobinsky, que fica resmungando pelos tubos que é o único que sabe como navegar pelas fendas deste Outro Mundo. Que bobagem! Se quer conversar com alguém tão fora da caixa, vá contar essa piada a ele!";
                         dialogBoxPai.style.display = "block";
                     }, 150);
                 }, 6000);
@@ -1141,6 +1239,9 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
         function iniciarJogoReal() {
             document.getElementById('storyScreen').style.display = 'none';
             document.getElementById('gameContainer').style.display = 'block'; 
+            
+            iniciarMusicaMundoReal();
+            
             updateGame(); 
         }
 
@@ -1164,24 +1265,11 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 osc.stop(tempoAtual + i * 0.1 + 0.1);
             });
         }
-
-        function desenharImagem(img, x, y, width, height, espelhar) {
-            ctx.save();
-            if (espelhar) {
-                ctx.translate(x + width / 2, y + height / 2);
-                ctx.scale(-1, 1);
-                ctx.drawImage(img, -width / 2, -height / 2, width, height);
-            } else {
-                ctx.drawImage(img, x, y, width, height);
-            }
-            ctx.restore();
-        }
-
-        function iniciarAnimacaoTunel() {
+function iniciarAnimacaoTunel() {
             emTransicao = true;
+            pararMusicaMundoReal();
             dialogBox.style.display = "none";
             canvas.style.display = "none";
-            
             tunelGif.style.display = "block";
             tunelGif.src = "tunel.gif?" + new Date().getTime();
 
@@ -1203,9 +1291,20 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 dialogBox.style.display = "flex";
                 dialogBox.innerHTML = "Lalai: Há portas que jamais deveriam ser abertas... e eu acabei de abrir uma delas.";
                 
-                // INICIA O SOM AMBIENTE GRAVE DE SUSPENSE
-                iniciarSomAmbienteOutroMundo();
+                // INICIA O TEMA DA CAIXINHA DE MÚSICA AQUI
+                iniciarTemaCaixinhaDeMusica();
             }, 3000); 
+        }
+        function desenharImagem(img, x, y, width, height, espelhar) {
+            ctx.save();
+            if (espelhar) {
+                ctx.translate(x + width / 2, y + height / 2);
+                ctx.scale(-1, 1);
+                ctx.drawImage(img, -width / 2, -height / 2, width, height);
+            } else {
+                ctx.drawImage(img, x, y, width, height);
+            }
+            ctx.restore();
         }
 
         function updateGame() {
@@ -1222,7 +1321,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
             // FORÇA A VELOCIDADE A SER EXTREMAMENTE LENTA NO OUTRO MUNDO (0.4) E NORMAL FORA DELE (1.5)
             if (faseOutroMundo) {
-                playerSpeed = 0.60;
+                playerSpeed = 0.30;
             } else {
                 playerSpeed = 1.0;
             }
@@ -1439,7 +1538,9 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
         });
 
         // AÇÃO DO BOTÃO A
-        document.getElementById('btnA').addEventListener('click', () => {
+        function executarAcaoBotaoA(e) {
+            if (e && e.cancelable) e.preventDefault(); 
+
             if (emTransicao || minigameOutroPaiAtivo) return;
 
             if (faseApresentacao) {
@@ -1524,7 +1625,12 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             }
 
             interagir();
-        });
+        }
+
+        // Ligar a função ao Botão A identificando o 'Toque' real no ecrã e não um clique virtual
+        const btnA = document.getElementById('btnA');
+        btnA.addEventListener('touchstart', executarAcaoBotaoA, { passive: false }); // Para os Telemóveis/Tablets
+        btnA.addEventListener('mousedown', executarAcaoBotaoA); // Para quem jogar no PC
     </script>
 </body>
 </html>
