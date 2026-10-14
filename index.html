@@ -720,7 +720,7 @@
             mundoRealCtx = new AudioContext();
             
             mundoRealGainNode = mundoRealCtx.createGain();
-            mundoRealGainNode.gain.setValueAtTime(0.15, mundoRealCtx.currentTime); // Volume inicial
+            mundoRealGainNode.gain.setValueAtTime(0.3, mundoRealCtx.currentTime); // Volume inicial
             mundoRealGainNode.connect(mundoRealCtx.destination);
 
             const notasMelodia = [
@@ -809,8 +809,8 @@
             ambienteGainNode = audioAmbienteCtx.createGain();
             ambienteGainNode.gain.setValueAtTime(0, audioAmbienteCtx.currentTime);
             
-            // Sobe o volume bem devagar (3 segundos) para não assustar, mantendo bem baixo (0.15)
-            ambienteGainNode.gain.linearRampToValueAtTime(0.15, audioAmbienteCtx.currentTime + 3); 
+            // Sobe o volume bem devagar (3 segundos) para não assustar, mantendo bem baixo (0.3)
+            ambienteGainNode.gain.linearRampToValueAtTime(0.3, audioAmbienteCtx.currentTime + 3); 
 
             oscGrave.connect(filter);
             oscDissonante.connect(filter);
@@ -886,7 +886,7 @@
             const masterGain = temaOutroMundoCtx.createGain();
             masterGain.gain.setValueAtTime(0.001, temaOutroMundoCtx.currentTime);
             // Sobe o volume suavemente ao longo de 3 segundos enquanto o túnel roda
-            masterGain.gain.linearRampToValueAtTime(0.3, temaOutroMundoCtx.currentTime + 3.0);
+            masterGain.gain.linearRampToValueAtTime(0.5, temaOutroMundoCtx.currentTime + 3.0);
             masterGain.connect(temaOutroMundoCtx.destination);
             
             const melodia = [329.63, 392.00, 493.88, 392.00, 261.63, 329.63, 392.00, 329.63];
@@ -902,7 +902,7 @@
                 osc.frequency.setValueAtTime(melodia[notaAtual], temaOutroMundoCtx.currentTime);
                 
                 gain.gain.setValueAtTime(0, temaOutroMundoCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.3, temaOutroMundoCtx.currentTime + 0.1);
+                gain.gain.linearRampToValueAtTime(0.5, temaOutroMundoCtx.currentTime + 0.1);
                 gain.gain.exponentialRampToValueAtTime(0.001, temaOutroMundoCtx.currentTime + 3.0); 
                 
                 osc.connect(gain);
@@ -1282,7 +1282,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 dialogBoxPai.style.display = "none";
 
                 dialogBoxLalai.style.display = "block";
-                dialogBoxLalai.innerHTML = "Eleitor? Não, eu disse Thor, o herói. Mas falando de escolhas... se ninguém escolhe nada aqui, não é possível mudar de ideia?";
+                dialogBoxLalai.innerHTML = "Eleitor? Não, eu disse Thor, o herói. Mas falando em escolhas... se ninguém escolhe nada aqui, não é possível mudar de ideia?";
 
                 agendar(() => {
                     dialogBoxLalai.style.display = "none";
@@ -1556,7 +1556,16 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             ctx.restore();
         }
 
-        function updateGame() {
+        let ultimoTempo = 0;
+
+        function updateGame(tempoAtual = 0) {
+            // Calcula o tempo decorrido entre os frames (Delta Time)
+            let deltaTime = (tempoAtual - ultimoTempo) / 1000;
+            ultimoTempo = tempoAtual;
+            
+            // Limita o deltaTime para evitar saltos bruscos se o jogo for minimizado
+            if (isNaN(deltaTime) || deltaTime > 0.1) deltaTime = 0.016;
+
             // VERIFICAÇÃO DE PROXIMIDADE AUTOMÁTICA COM O OUTRO PAI NO OFFICE
             if (cenarioAtual === "storage" && chaveUsada && mapaCasa[cenarioAtual].npc && !minigameOutroPaiAtivo) {
                 let npc = mapaCasa[cenarioAtual].npc;
@@ -1568,12 +1577,9 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
             let isMoving = false;
 
-            // FORÇA A VELOCIDADE A SER EXTREMAMENTE LENTA NO OUTRO MUNDO (0.4) E NORMAL FORA DELE (1.5)
-            if (faseOutroMundo) {
-                playerSpeed = 0.45;
-            } else {
-                playerSpeed = 1.4;
-            }
+            // Velocidade em pixéis por segundo ajustada ao tempo real
+            let velocidadeBase = faseOutroMundo ? 50 : 140;
+            let playerSpeed = velocidadeBase * deltaTime;
 
             if (movingLeft) { playerX -= playerSpeed; isFacingLeft = true; isMoving = true; }
             if (movingRight) { playerX += playerSpeed; isFacingLeft = false; isMoving = true; }
