@@ -120,7 +120,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain; 
+            object-fit: cover;
             image-rendering: pixelated;
             z-index: 1;
         }
@@ -249,10 +249,10 @@
 
         #dialogBox {
             position: absolute;
-            bottom: 20px; 
+            bottom: 45px; /* Posição original nos cenários */
             left: 50%;
             transform: translateX(-50%);
-            width: 55%; /* Largura mais controlada para dar espaço aos botões nas laterais */
+            width: 55%; 
             max-width: 550px;
             min-width: 240px;
             background-color: rgba(44, 36, 64, 0.95); 
@@ -268,11 +268,14 @@
             white-space: pre-wrap;
         }
 
-        /* Ajuste automático extra para ecrãs na vertical (modo retrato) */
+        #dialogBox.dialogo-proximo {
+            bottom: 15vh;
+        }
+
         @media (max-aspect-ratio: 1/1) {
             #dialogBox {
                 width: 60%;
-                bottom: 15px;
+                bottom: 40px;
                 font-size: 13px;
                 padding: 10px;
             }
@@ -351,7 +354,7 @@
         /* CAIXA DE ESCOLHAS DO MINIGAME */
         #choiceContainer {
             position: absolute;
-            bottom: 30px; 
+            bottom: 80px; 
             left: 50%;
             transform: translateX(-50%);
             display: none; 
@@ -527,13 +530,250 @@
             transform: translateY(5px);
             box-shadow: none;
         }
+        /* CENA E INTERFACE DO COMPUTADOR                       */
+        #introScene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+
+        #imgPC {
+            width: 100%;
+            max-width: 800px;
+            object-fit: contain;
+            image-rendering: pixelated;
+            transition: transform 2s ease-in-out, filter 1s ease-in; 
+            transform-origin: 50% 38%; 
+        }
+
+        #btnIniciarZoom {
+            position: absolute;
+            bottom: 50px;
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #008080;
+            color: white;
+            border: 4px solid #fff;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #004040;
+            transition: transform 0.1s;
+        }
+
+        .zoom-ativo {
+            transform: scale(4.5); 
+            filter: blur(1px) brightness(0.5); 
+        }
+
+        #quizInterface {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 210;
+            opacity: 0; 
+            pointer-events: none; 
+            transition: opacity 1s ease-in-out; 
+        }
+
+        #controlesTeste {
+            position: absolute;
+            top: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 30;
+        }
+
+        .btn-controle {
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: #d1506b;
+            color: white;
+            border: 2px solid #8c2a41;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        #monitorBox {
+            background-color: #c0c0c0; 
+            border-top: 4px solid #fff;
+            border-left: 4px solid #fff;
+            border-bottom: 4px solid #808080;
+            border-right: 4px solid #808080;
+            padding: 10px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 550px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #pcScreen {
+            width: 100%;
+            height: 430px;
+            background-color: #008080; 
+            border: inset 3px #808080;
+            position: relative;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        #janelaHeader {
+            background-color: #000080;
+            color: white;
+            padding: 4px 8px;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #fff;
+        }
+
+        #gameArea {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #perguntaTexto {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            background-color: white;
+            color: black;
+            padding: 15px;
+            border: 2px solid #000;
+            min-height: 60px;
+        }
+
+        .btn-opcao {
+            background-color: #c0c0c0;
+            color: black;
+            border-top: 2px solid #fff;
+            border-left: 2px solid #fff;
+            border-bottom: 2px solid #808080;
+            border-right: 2px solid #808080;
+            padding: 10px;
+            margin: 5px 0;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.1s;
+        }
+
+        #feedbackTexto {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 16px;
+            min-height: 40px;
+            color: #ffff00;
+            text-shadow: 1px 1px 0px #000;
+        }
+
+        #btnVoltarQuarto {
+            margin-top: 20px;
+            padding: 12px 25px;
+            font-size: 14px;
+            font-family: inherit;
+            font-weight: bold;
+            background-color: #5a4b80;
+            color: #ffffff;
+            border: 2px solid #2c2440;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #2c2440;
+            transition: all 0.1s;
+        }
+
+        .outro-mundo-monitor { background-color: #2b0000 !important; border-color: #1a0000 !important; }
+        .outro-mundo-screen { background-color: #000000 !important; border-color: #4a0000 !important; box-shadow: inset 0 0 30px #ff0000; }
+        .outro-mundo-header { background-color: #550000 !important; color: #ffaaaa !important; border-bottom: 2px dashed #ff0000 !important; font-family: 'Times New Roman', serif; letter-spacing: 2px; }
+        .outro-mundo-pergunta { background-color: transparent !important; color: #ff3333 !important; border: 2px dashed #ff0000 !important; font-family: 'Times New Roman', serif; text-shadow: 2px 2px 0px #330000; }
+        .outro-mundo-btn { background-color: #110000 !important; color: #ff6666 !important; border: 1px solid #ff0000 !important; font-family: 'Times New Roman', serif; }
+
+        @keyframes popup {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .popup-animacao { animation: popup 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes glitch {
+            0% { transform: translate(0); text-shadow: 2px 2px 0px #ff0000, -2px -2px 0px #000; }
+            20% { transform: translate(-3px, 2px); color: #fff; }
+            40% { transform: translate(-1px, -2px); color: #ff0000; }
+            60% { transform: translate(3px, 1px); text-shadow: -4px 0px 0px #ff0000; }
+            80% { transform: translate(2px, -1px); color: #fff; }
+            100% { transform: translate(0); }
+        }
+        .glitch-effect { animation: glitch 0.15s infinite; color: #ff0000 !important; border-color: #ff0000 !important; background-color: #1a0000 !important; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-1deg); }
+            50% { transform: translateX(5px) rotate(1deg); }
+            75% { transform: translateX(-5px) rotate(-1deg); }
+        }
+        .shake-screen { animation: shake 0.2s 3; }
+
+        #btnFullscreen {
+            position: absolute;
+            top: 35px;
+            right: 30px;
+            z-index: 20;
+            background-color: rgba(44, 36, 64, 0.85);
+            color: #fceea7;
+            border: 3px solid #5a4b80;
+            border-radius: 8px;
+            width: 50px;
+            height: 50px;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        #btnFullscreen:hover {
+            background-color: rgba(90, 75, 128, 0.95);
+        }
+
+        #btnFullscreen:active {
+            transform: scale(0.92);
+        }
     </style>
 </head>
 <body>
 
     <div id="menuScreen" class="screen-overlay">
         <img src="fanfic.png" alt="Casa Cor-de-Rosa">
-        <button class="btn-main" onclick="mostrarHistoria()">COMEÇAR JOGO</button>
+        <button class="btn-main" onclick="entrarEmTelaCheia(); mostrarHistoria();">COMEÇAR JOGO</button>
     </div>
 
     <div id="storyScreen" class="screen-overlay" style="display: none;">
@@ -545,8 +785,8 @@
     </div>
 
     <div id="gameContainer">
-        <!-- Canvas Wide 800x360 -->
-        <canvas id="gameCanvas" width="800" height="360"></canvas>
+        <button id="btnFullscreen" onclick="alternarTelaCheia()">⛶</button>
+        <canvas id="gameCanvas" width="640" height="360"></canvas>
         <div id="flashScreen"></div>
         <img id="tunelGifOverlay" src="tunel.gif" alt="Túnel Coraline">
 
@@ -586,8 +826,382 @@
             <button id="btnA" class="btn-action">A</button>
         </div>
     </div>
+<!-- CENA INTRODUTÓRIA DO COMPUTADOR -->
+    <div id="introScene">
+        <img id="imgPC" src="" alt="Computador Retro">
+    </div>
 
+    <!-- INTERFACE DO QUIZ DO COMPUTADOR -->
+    <div id="quizInterface">
+        <div id="monitorBox">
+            <div id="pcScreen">
+                <div id="janelaHeader">
+                    <span id="janelaTitulo">Trivia Quiz v1.0</span>
+                    <span>X</span>
+                </div>
+                
+                <div id="gameArea">
+                    <img id="iconePersonagem" src="" style="display: none; width: 220px; height: 220px; margin: 0 auto 15px auto; object-fit: contain;">
+                    <div id="perguntaTexto">Carregando pergunta...</div>
+                    <div id="opcoesContainer"></div>
+                    <div id="feedbackTexto"></div>
+                </div>
+            </div>
+        </div>
+
+        <button id="btnVoltarQuarto" onclick="sairDoPC()">VOLTAR AO QUARTO</button>
+    </div>
     <script>
+        function alternarTelaCheia() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                // Entrar em tela cheia
+                let elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch(err => console.log(err));
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                }
+            } else {
+                // Sair da tela cheia
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+        function entrarEmTelaCheia() {
+            let elem = document.documentElement; // Pega a página inteira
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => {
+                    console.log("Erro ao tentar entrar em tela cheia:", err.message);
+                });
+            } else if (elem.webkitRequestFullscreen) { /* Safari / iOS antigo */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge antigo */
+                elem.msRequestFullscreen();
+            }
+        }
+        // =====================================================================
+        // INTEGRAÇÃO E LÓGICA DO COMPUTADOR
+        // =====================================================================
+        let pcAtivo = false;
+        const imagemPCNormal = "retro-computing.png"; 
+        const imagemPCOutroMundo = "retro-computing-horror.png"; 
+
+        let isOutroMundo = false;
+        let perguntaAtualIndex = 0;
+
+        const perguntasReal = [
+            {
+                pergunta: "Em Shrek Para Sempre, qual vilão oferece um contrato mágico ao Shrek para que ele volte a ser um ogro assustador por um dia, em troca de um único dia do seu passado?",
+                opcoes: [
+                    { texto: "A) Lord Farquaad", correta: false, feedback: "Hm, não é isso..." },
+                    { texto: "B) Rumpelstiltskin", correta: true, feedback: "Exato!" },
+                    { texto: "C) Príncipe Encantado", correta: false, feedback: "Hm, não é isso..." }
+                ]
+            },
+            {
+                pergunta: "Quando a Alice se perde no País das Maravilhas e não sabe qual caminho escolher na floresta, qual personagem enigmático aparece nas árvores e diz a famosa frase: 'Para quem não sabe para onde vai, qualquer caminho serve'?",
+                opcoes: [
+                    { texto: "A) O Gato Risonho.", correta: true, feedback: "Exatamente!" },
+                    { texto: "B) O Coelho Branco.", correta: false, feedback: "Hm, não é isso..." },
+                    { texto: "C) O Chapeleiro Maluco.", correta: false, feedback: "Hm, não é isso..." }
+                ]
+            },
+            {
+                pergunta: "A Tiana trabalha dia e noite na animada cidade de Nova Orleans. Qual é o grande sonho que ela quer realizar com o seu próprio esforço?",
+                opcoes: [
+                    { texto: "A) Casar com um príncipe.", correta: false, feedback: "Hm, não é isso..." },
+                    { texto: "B) Abrir o seu próprio restaurante.", correta: true, feedback: "Exatamente! Quase dá para sentir o cheiro dos beignets daqui!" },
+                    { texto: "C) Cantar jazz.", correta: false, feedback: "Hm, não é isso..." }
+                ]
+            }
+        ];
+
+        const perguntasOutroMundo = [
+            {
+                icone: "wig.png",
+                pergunta: "Rumpelstiltskin sabia muito bem: quando alguém se cansa da rotina chata em família, assinar um acordo é uma benção. Você rastejou até aqui para fugir da sua casa cinzenta... Assinar o nosso acordo e aceitar os botões não é exatamente o que você desejava?",
+                opcoes: [
+                    { texto: "A) Você não vai me enganar! Eu não aceito acordo nenhum!", rebelde: true, feedback: "TARDE DEMAIS. O CONTRATO FOI ASSINADO QUANDO VOCÊ CRUZOU A PORTA" },
+                    { texto: "B) Sim...", rebelde: false, feedback: "Viu como é simples? Quando a rotina sufoca, entregar-se à Outra Mãe é a única saída." },
+                    { texto: "C) Sim... não quero voltar para casa.", rebelde: false, feedback: "Viu como é simples? Quando a rotina sufoca, entregar-se à Outra Mãe é a única saída." },
+                ]
+            },
+            {
+                icone: "Gato Risonho sem fundo.png",
+                pergunta: "O Gato Risonho avisou: 'Para quem não sabe para onde vai, qualquer caminho serve.' Você rastejou por aquela porta secreta sem rumo, apenas fugindo da sua vida chata. Se você nem sabia para onde estava indo, qual é a diferença de ficar presa aqui?",
+                opcoes: [
+                    { texto: "A) Nenhuma... eu só queria fugir da solidão, então qualquer lugar com carinho serve.", rebelde: false, feedback: "Viu só? Quando você não sabe para onde vai, o nosso abraço é o único destino seguro que lhe resta..." },
+                    { texto: "B) Faz toda a diferença! Eu sei exatamente para onde vou: vou voltar para casa!", rebelde: true, feedback: "NÃO HÁ PARA ONDE FUGIR! VOCÊ JÁ ESTA PRESA NA ESCURIDÃO." },
+                    { texto: "C) Nenhuma... se a Outra Mãe me quer aqui, esse é o único caminho que importa.", rebelde: false, feedback: "Viu só? Quando você não sabe para onde vai, o nosso abraço é o único destino seguro que lhe resta..." },
+                ]
+            },
+            {
+                icone: "sombra.png",
+                pergunta: "O Homem da Sombra oferecia tudo o que as pessoas mais queriam em troca de suas almas, uma troca perfeita para a realização de um mundo perfeito. Se alguém realiza os seus maiores desejos e te salva da solidão, é mais do que justo dar algo em troca, não é? A sua Outra Mãe te deu o mundo perfeito que você sempre mereceu. Qual é a justa retribuição por essa boa ação?",
+                opcoes: [
+                    { texto: "A) Eu vou viver aqui para sempre.", rebelde: false, feedback: "Viu como é simples? É um preço tão pequeno por uma eternidade de realizações." },
+                    { texto: "B) Eu vou ser a filha perfeita.", rebelde: false, feedback: "Viu como é simples? É um preço tão pequeno por uma eternidade de realizações." },
+                    { texto: "C) Eu não te devo nada!", rebelde: true, feedback: "A INGRATIDÃO ESTRAGA A PERFEIÇÃO. A INGRATIDÃO ESTRAGA A PERFEIÇÃO. A INGRATIDÃO ESTRAGA A PERFEIÇÃO." }
+                ]
+            }
+        ];
+
+        function abrirComputador() {
+            pcAtivo = true;
+            movingLeft = false; movingRight = false; movingUp = false; movingDown = false;
+
+            document.getElementById('joystickArea').style.display = 'none';
+            document.querySelector('.action-buttons').style.display = 'none';
+            dialogBox.style.display = 'none';
+
+            isOutroMundo = faseOutroMundo || chaveUsada;
+
+            const monitorBox = document.getElementById("monitorBox");
+            const pcScreen = document.getElementById("pcScreen");
+            const janelaHeader = document.getElementById("janelaHeader");
+            const janelaTitulo = document.getElementById("janelaTitulo");
+            const perguntaTexto = document.getElementById("perguntaTexto");
+            const btnTeste = document.getElementById("btnTeste");
+            const btnVoltar = document.getElementById("btnVoltarQuarto");
+            const imgPC = document.getElementById('imgPC');
+
+            if (isOutroMundo) {
+                if (btnTeste) {
+                    btnTeste.innerHTML = "MODO: OUTRO MUNDO"; 
+                    btnTeste.style.backgroundColor = "#2b0000";
+                }
+                btnVoltar.style.backgroundColor = "#330000";
+                btnVoltar.style.borderColor = "#ff0000";
+                btnVoltar.style.color = "#ffaaaa";
+
+                monitorBox.classList.add("outro-mundo-monitor"); 
+                pcScreen.classList.add("outro-mundo-screen");
+                janelaHeader.classList.add("outro-mundo-header"); 
+                perguntaTexto.classList.add("outro-mundo-pergunta");
+                janelaTitulo.innerHTML = "QUEM É A SUA MÃE FAVORITA?";
+                imgPC.src = imagemPCOutroMundo;
+            } else {
+                if (btnTeste) {
+                    btnTeste.innerHTML = "MODO: Mundo Real"; 
+                    btnTeste.style.backgroundColor = "#d1506b";
+                }
+                btnVoltar.style.backgroundColor = "#5a4b80";
+                btnVoltar.style.borderColor = "#2c2440";
+                btnVoltar.style.color = "#ffffff";
+
+                monitorBox.classList.remove("outro-mundo-monitor"); 
+                pcScreen.classList.remove("outro-mundo-screen");
+                janelaHeader.classList.remove("outro-mundo-header"); 
+                perguntaTexto.classList.remove("outro-mundo-pergunta");
+                janelaTitulo.innerHTML = "Trivia Quiz v1.0";
+                imgPC.src = imagemPCNormal;
+            }
+
+            perguntaAtualIndex = 0; 
+            carregarPergunta();
+
+            // Mostra a cena do PC
+            document.getElementById('introScene').style.display = 'flex';
+            imgPC.classList.remove('zoom-ativo');
+            document.getElementById('quizInterface').style.opacity = '0';
+            document.getElementById('quizInterface').style.pointerEvents = 'none';
+
+            // disparA A TRANSIÇÃO AUTOMATICAMENTE APÓS 100 MILISSEGUNDOS
+            setTimeout(() => {
+                iniciarTransicao();
+            }, 100);
+        }
+
+        function iniciarTransicao() {
+            const img = document.getElementById('imgPC');
+            const quizInterface = document.getElementById('quizInterface');
+
+            img.classList.add('zoom-ativo');
+
+            tocarSomLigar();
+
+            setTimeout(() => {
+                quizInterface.style.opacity = '1';
+                quizInterface.style.pointerEvents = 'all';
+            }, 2000);
+        }
+
+        function sairDoPC() {
+            const img = document.getElementById('imgPC');
+            const quizInterface = document.getElementById('quizInterface');
+
+            // Esconde a interface do quiz suavemente
+            quizInterface.style.opacity = '0';
+            quizInterface.style.pointerEvents = 'none';
+
+            setTimeout(() => {
+                img.classList.remove('zoom-ativo');
+                document.getElementById('introScene').style.display = 'none';
+                
+                document.getElementById('joystickArea').style.display = 'grid';
+                document.querySelector('.action-buttons').style.display = 'block';
+                dialogBox.style.display = 'block';
+
+                // Afasta um pouco a Lalai da mesa para não reabrir o PC imediatamente ao fechar
+                playerX = 300;
+
+                pcAtivo = false;
+                emTransicao = false;
+                
+                requestAnimationFrame(updateGame);
+            }, 500);
+        }
+
+        function tocarSomLigar() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(200, ctx.currentTime);
+            osc.frequency.linearRampToValueAtTime(800, ctx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + 0.5);
+        }
+
+        function tocarSomAcertoPC() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator(); const gain = ctx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(600, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+            osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.2);
+        }
+
+        function carregarPergunta() {
+            const container = document.getElementById("opcoesContainer");
+            const perguntaTxt = document.getElementById("perguntaTexto");
+            const feedbackTxt = document.getElementById("feedbackTexto");
+            const pcScreen = document.getElementById("pcScreen");
+            
+            container.innerHTML = ""; feedbackTxt.innerHTML = "";
+            perguntaTxt.classList.remove("glitch-effect"); feedbackTxt.classList.remove("glitch-effect"); pcScreen.classList.remove("shake-screen");
+            const icone = document.getElementById("iconePersonagem"); icone.style.display = "none"; icone.classList.remove("popup-animacao");
+            perguntaTxt.style.display = "block";
+            document.getElementById("opcoesContainer").style.display = "block";
+
+            let bancoAtual = isOutroMundo ? perguntasOutroMundo : perguntasReal;
+            if (perguntaAtualIndex >= bancoAtual.length) perguntaAtualIndex = 0; 
+            let dadosPergunta = bancoAtual[perguntaAtualIndex];
+            perguntaTxt.innerHTML = dadosPergunta.pergunta;
+
+            dadosPergunta.opcoes.forEach((opcao) => {
+                let btn = document.createElement("button");
+                btn.className = "btn-opcao";
+                if (isOutroMundo) btn.classList.add("outro-mundo-btn");
+                btn.innerHTML = opcao.texto;
+                btn.onclick = () => verificarResposta(opcao);
+                container.appendChild(btn);
+            });
+        }
+
+        function verificarResposta(opcaoEscolhida) {
+            const feedbackTxt = document.getElementById("feedbackTexto");
+            const perguntaTxt = document.getElementById("perguntaTexto");
+            const pcScreen = document.getElementById("pcScreen");
+            const botoes = document.querySelectorAll('.btn-opcao');
+            
+            botoes.forEach(btn => btn.disabled = true);
+            feedbackTxt.innerHTML = opcaoEscolhida.feedback;
+
+            if (isOutroMundo) {
+                if (opcaoEscolhida.rebelde) {
+                    tocarSomSusto();
+                    perguntaTxt.classList.add("glitch-effect"); 
+                    feedbackTxt.classList.add("glitch-effect"); 
+                    pcScreen.classList.add("shake-screen");
+
+                    const icone = document.getElementById("iconePersonagem");
+                    icone.classList.add("shake-screen"); // <--- Apenas aplica o tremor (sem glitch na imagem transparente)
+                    let bancoAtual = perguntasOutroMundo;
+                    
+                    icone.style.opacity = "0"; 
+                    icone.src = bancoAtual[perguntaAtualIndex].icone;
+                    
+                    icone.onload = function() {
+                        icone.style.display = "block";
+                        icone.style.opacity = "1";
+                        icone.classList.remove("popup-animacao");
+                        void icone.offsetWidth; 
+                        icone.classList.add("popup-animacao");
+                    };
+                    
+                    perguntaTxt.style.display = "none";
+                    document.getElementById("opcoesContainer").style.display = "none";
+                } else {
+                    feedbackTxt.style.color = "#ff6666";
+                }
+            } else {
+                if (opcaoEscolhida.correta) { 
+                    feedbackTxt.style.color = "#ffff00"; 
+                    tocarSomAcertoPC(); 
+                } 
+                else { feedbackTxt.style.color = "#ff9999"; tocarSomErro(); }
+            }
+
+            setTimeout(() => {
+                perguntaAtualIndex++; carregarPergunta();
+            }, 2500); 
+        }
+
+        function toggleWorld() {
+            isOutroMundo = !isOutroMundo;
+            const btnTeste = document.getElementById("btnTeste");
+            const btnVoltar = document.getElementById("btnVoltarQuarto");
+            const monitorBox = document.getElementById("monitorBox");
+            const pcScreen = document.getElementById("pcScreen");
+            const janelaHeader = document.getElementById("janelaHeader");
+            const janelaTitulo = document.getElementById("janelaTitulo");
+            const perguntaTexto = document.getElementById("perguntaTexto");
+            const imgPC = document.getElementById('imgPC');
+
+            sairDoPC();
+
+            setTimeout(() => {
+                if (isOutroMundo) {
+                    if (btnTeste) {
+                        btnTeste.innerHTML = "MODO: OUTRO MUNDO"; 
+                        btnTeste.style.backgroundColor = "#2b0000";
+                    }
+                    btnVoltar.style.backgroundColor = "#330000";
+                    btnVoltar.style.borderColor = "#ff0000";
+                    btnVoltar.style.color = "#ffaaaa";
+
+                    monitorBox.classList.add("outro-mundo-monitor"); 
+                    pcScreen.classList.add("outro-mundo-screen");
+                    janelaHeader.classList.add("outro-mundo-header"); 
+                    perguntaTexto.classList.add("outro-mundo-pergunta");
+                    janelaTitulo.innerHTML = "QUEM É A SUA MÃE FAVORITA?";
+                    imgPC.src = imagemPCOutroMundo;
+                } else {
+                    if (btnTeste) {
+                        btnTeste.innerHTML = "MODO: Mundo Real"; 
+                        btnTeste.style.backgroundColor = "#d1506b";
+                    }
+                    btnVoltar.style.backgroundColor = "#5a4b80";
+                    btnVoltar.style.borderColor = "#2c2440";
+                    btnVoltar.style.color = "#ffffff";
+
+                    monitorBox.classList.remove("outro-mundo-monitor"); 
+                    pcScreen.classList.remove("outro-mundo-screen");
+                    janelaHeader.classList.remove("outro-mundo-header"); 
+                    perguntaTexto.classList.remove("outro-mundo-pergunta");
+                    janelaTitulo.innerHTML = "Trivia Quiz v1.0";
+                    imgPC.src = imagemPCNormal;
+                }
+                perguntaAtualIndex = 0; 
+                carregarPergunta();
+            }, 800);
+        }
         // BLOQUEIA O CLIQUE DIREITO (MENU DE CONTEXTO) EM TUDO
         document.addEventListener('contextmenu', event => event.preventDefault());
 
@@ -610,7 +1224,7 @@
 
         let playerX = canvas.width / 2 - 32;
         let playerY = 240;
-        let playerSpeed = 1.5; 
+        let playerSpeed = 1.0; 
         
         let movingLeft = false, movingRight = false, movingUp = false, movingDown = false;
         let isFacingLeft = false;
@@ -976,54 +1590,54 @@
         let dogX = playerX - 30;
         let dogY = playerY + 20; 
 
-        // GESTOR DE CENÁRIOS, LIMITES E SPAWNS
+       // GESTOR DE CENÁRIOS, LIMITES E SPAWNS (ATUALIZADO PARA 640x360)
         let cenarioAtual = "escadaria"; // Inicia na escadaria
 
         const mapaCasa = {
             sala: {
                 img: imgSala,
                 limiteEsquerdo: 0,
-                limiteDireito: 730,
-                chao: 160,
+                limiteDireito: 540,
+                chao: 175,
                 portas: [
-                    { x: 0, largura: 80, destino: "escadaria", spawnX: 700, gatilho: "esquerda" } 
+                    { x: 0, largura: 80, destino: "escadaria", spawnX: 520, gatilho: "esquerda" } 
                 ],
                 npc: null
             },
             escadaria: {
                 img: imgEscadaria,
-                limiteEsquerdo: 10,   
-                limiteDireito: 720,   
-                chao: 160,        
+                limiteEsquerdo: 5,   
+                limiteDireito: 550,   
+                chao: 162,        
                 portas: [
-                    { x: 70, largura: 60, destino: "storage", spawnX: 60, gatilho: "cima" },
-                    { x: 430, largura: 30, destino: "cozinha", spawnX: 20, gatilho: "cima" }, 
-                    { x: 670, largura: 60, destino: "sala", spawnX: 10, gatilho: "direita" }     
+                    { x: 50, largura: 60, destino: "storage", spawnX: 60, gatilho: "cima" },
+                    { x: 330, largura: 60, destino: "cozinha", spawnX: 20, gatilho: "cima" }, 
+                    { x: 500, largura: 60, destino: "sala", spawnX: 10, gatilho: "direita" }     
                 ],
                 npc: null
             },
             cozinha: {
                 img: imgCozinha,
                 limiteEsquerdo: 10,
-                limiteDireito: 690,
-                chao: 170,
+                limiteDireito: 530,
+                chao: 180,
                 portas: [
-                    { x: 0, largura: 70, destino: "escadaria", spawnX: 440, gatilho: "esquerda" } 
+                    { x: 0, largura: 70, destino: "escadaria", spawnX: 300, gatilho: "esquerda" } 
                 ],
                 npc: null
             },
             storage: {
                 img: imgOffice,
-                limiteEsquerdo: 50,
-                limiteDireito: 710,
-                chao: 170,
+                limiteEsquerdo: 30,
+                limiteDireito: 540,
+                chao: 180,
                 portas: [
-                    { x: 0, largura: 70, destino: "escadaria", spawnX: 130, gatilho: "cima" } 
+                    { x: 0, largura: 70, destino: "escadaria", spawnX: 80, gatilho: "cima" } 
                 ],
                 npc: {
                     id: "outroPai",
                     img: imgOutroPaiCorpo, 
-                    x: 550, 
+                    x: 420, 
                     y: 110, 
                     largura: 80,
                     interagivel: true
@@ -1059,9 +1673,14 @@
         }
         }
 
-        // FUNÇÃO PARA FALAR COM NPCS
+       // FUNÇÃO PARA FALAR COM NPCS / INTERAGIR
         function interagir() {
-            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo) return;
+            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo || pcAtivo) return;
+
+            if (cenarioAtual === "storage" && playerX >= 210 && playerX <= 330) {
+                abrirComputador();
+                return;
+            }
 
             const salaAtual = mapaCasa[cenarioAtual];
             
@@ -1102,6 +1721,10 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
         function iniciarMinigameOutroPai() {
             minigameOutroPaiAtivo = true;
             canvas.style.display = "none";
+            
+            // LIMPA QUALQUER ZOOM OU CLASSE DE SUSTO ANTERIOR
+            portraitFrame.classList.remove("jumpscare");
+            portraitFrame.style.transform = "translateX(-50%) scale(1)";
             portraitFrame.style.display = "block";
             
             // ESCONDE OS CONTROLES DO JOGO
@@ -1110,20 +1733,26 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             
             outroPaiPortrait.src = "happy.png"; 
             dialogBoxLalai.style.display = "none"; 
-            
-            // Esconde a caixa roxa de exploração
             dialogBox.style.display = "none"; 
             
-            // MOSTRA O BALÃO BRANCO DO OUTRO PAI
             dialogBoxPai.style.display = "block";
             dialogBoxPai.innerHTML = "Ei, Lalai! Que bom que você está aqui. Quer ouvir uma piada, querida? Sabe o que o zero disse para o oito? 'Que belo cinto!' HA HA HA!";
             
-            // CHAMA A FUNÇÃO QUE CRIA OS BOTÕES
             mostrarOpcoesPrincipais();
         }
 
-        // A FUNÇÃO RESTAURADA QUE FAZ AS OPÇÕES APARECEREM
         function mostrarOpcoesPrincipais() {
+            // Remove o efeito de jumpscare / escala se ele tiver ficado ativo
+            portraitFrame.classList.remove("jumpscare");
+            outroPaiPortrait.style.transform = "none"; // Garante o tamanho normal do retrato
+            
+            dialogBoxLalai.style.display = "none";
+            dialogBoxPai.classList.remove("desespero");
+            mudarRetratoOutroPai("happy.png");
+            
+            dialogBoxPai.innerHTML = "Ei, Lalai! Quer ouvir uma piada, querida? Sabe o que o zero disse para o oito? 'Que belo cinto!' HA HA HA!";
+            dialogBoxPai.style.display = "block";
+
             choiceContainer.innerHTML = `
                 <button class="btn-choice" onclick="escolhaMinigame('A')">A) Forçar o riso</button>
                 <button class="btn-choice" onclick="escolhaMinigame('B')">B) Séria e direta</button>
@@ -1204,7 +1833,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 
                 tocarSomErro();
                 
-                dialogBoxPai.innerHTML = "A n o r m a l i d a d e  D e t e c t a d a.";
+                dialogBoxPai.innerHTML = "ANORMALIDADE DETECTADA";
                 dialogBoxPai.style.display = "block";
                 
                 agendar(() => {
@@ -1314,12 +1943,13 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                         dialogBoxPai.style.display = "block";
 
                         agendar(() => {
-                            dialogBoxPai.innerHTML = "A n o r m a l i d a d e  D e t e c t a d a.";
+                            dialogBoxPai.innerHTML = "ANORMALIDADE DETECTADA";
 
                             agendar(() => {
                                 tocarSomSusto();
                                 mudarRetratoOutroPai("jumpscare.png", "susto");
                                 dialogBoxPai.classList.add("desespero");
+                                portraitFrame.classList.add("desespero");
                                 dialogBoxPai.innerHTML = "ElA Te OuViu!!!!";
                                 flashScreen.classList.add("strobe");
 
@@ -1328,10 +1958,16 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                                     flashScreen.style.transition = "none"; 
                                     flashScreen.style.backgroundColor = "#000";
                                     flashScreen.style.opacity = "1";
+                                    
+                                    // Limpa os estados de desespero e reset exato igual ao B2
                                     dialogBoxPai.style.display = "none";
                                     dialogBoxPai.classList.remove("desespero");
                                     
-                                    portraitFrame.classList.remove("jumpscare"); 
+                                    dialogBoxLalai.style.display = "none"; 
+                                    
+                                    portraitFrame.classList.remove("desespero"); 
+                                    portraitFrame.classList.remove("jumpscare");
+                                    portraitFrame.style.transform = "translateX(-50%) scale(1)"; // Reseta o tamanho exato
                                     portraitFrame.style.display = "none"; 
                                     
                                     agendar(() => {
@@ -1355,7 +1991,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                                         dialogBox.innerHTML = "Lalai: Por pouco... Preciso ter cuidado com o que digo a ele.";
                                         updateGame();
                                     }, 1000);
-                                }, 2200);
+                                }, 2200); 
                             }, 1800);
                         }, 3500);
                     }, 150);
@@ -1445,25 +2081,33 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 }, 4000);
             }
             else if (opcao === 'C_SAIR') {
+                limparAgendamentos(); 
                 pararSomSuspense();
+                
                 minigameOutroPaiAtivo = false;
                 choiceContainer.style.display = "none";
+                choiceContainer.innerHTML = "";
                 dialogBoxLalai.style.display = "none";
                 dialogBoxPai.style.display = "none"; 
                 portraitFrame.style.display = "none";
+                
                 canvas.style.display = "block";
                 
                 document.getElementById('joystickArea').style.display = 'grid';
                 document.querySelector('.action-buttons').style.display = 'block';
                 
-                playerX = 400;
+                cenarioAtual = "storage";
+                playerX = 260;
+                playerY = 180;
                 saiuDoMinigame = false; 
                 
                 missaoBobinskyAtiva = true;
                 
                 dialogBox.style.display = "block";
                 dialogBox.innerHTML = "Lalai: Preciso encontrar o Sr. Bobinsky e descobrir sobre essas fendas...";
+                
                 updateGame();
+                return; 
             }
             else if (opcao === 'C_VOLTAR') {
                 pararSomSuspense();
@@ -1520,6 +2164,11 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             dialogBox.style.display = "none";
             canvas.style.display = "none";
             
+            // Oculta todos os controles exceto a Action Button (Botão A)
+            document.getElementById('joystickArea').style.display = 'none';
+            document.getElementById('inventoryBox').style.display = 'none';
+            document.getElementById('btnFullscreen').style.display = 'none'; // Se você adicionou o botão flutuante
+            
             tunelGif.style.display = "block";
             tunelGif.src = "tunel.gif?" + new Date().getTime();
 
@@ -1531,7 +2180,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 
                 faseOutroMundo = true; 
                 faseApresentacao = true; 
-                indiceApresentacao = 0; // <--- Começa em 0
+                indiceApresentacao = 0; 
                 emTransicao = false;
                 
                 ctx.imageSmoothingEnabled = false;
@@ -1541,7 +2190,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 portraitContainer.style.display = "none";
 
                 dialogBox.style.display = "flex";
-                dialogBox.innerHTML = "Lalai: Há portas que jamais deveriam ser abertas... e eu acabei de abrir uma delas."; // <--- Frase reposta
+                dialogBox.innerHTML = "Lalai: Há portas que jamais deveriam ser abertas... e eu acabei de abrir uma delas."; 
             }, 3000);
         }
         function desenharImagem(img, x, y, width, height, espelhar) {
@@ -1573,12 +2222,12 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                     iniciarMinigameOutroPai();
                 }
             }
-            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo) return; 
+            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo || pcAtivo) return; 
 
             let isMoving = false;
 
             // Velocidade em pixéis por segundo ajustada ao tempo real
-            let velocidadeBase = faseOutroMundo ? 50 : 140;
+            let velocidadeBase = faseOutroMundo ? 50 : 120;
             let playerSpeed = velocidadeBase * deltaTime;
 
             if (movingLeft) { playerX -= playerSpeed; isFacingLeft = true; isMoving = true; }
@@ -1617,7 +2266,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             }
 
             let currentImgPlayer = isStepFrame ? imgPlayerPasso : imgPlayer;
-            let dogPosOffset = isFacingLeft ? 65 : -65;
+            let dogPosOffset = isFacingLeft ? 55 : -55;
 
             // REGRAS DE COLISÃO E LIMITES DINÂMICOS DO CENÁRIO ATUAL
             let salaDados = mapaCasa[cenarioAtual];
@@ -1631,8 +2280,8 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
             // MISSÃO DA CHAVE E PORTA SECRETA (EXECUTA APENAS UMA VEZ EM TODO O JOGO)
             if (cenarioAtual === "sala" && !faseOutroMundo) {
-                if (playerX > 640) { 
-                    // Verificamos se !avisoPortaFeito é verdadeiro. Se já foi ativado antes, isto dá falso e nunca mais entra.
+                if (playerX > 480) { 
+                    // Verificamos se !avisoPortaFeito é verdadeiro... isto dá falso e nunca mais entra.
                     if (!temChave && !avisoPortaFeito) {
                         avisoPortaFeito = true; // Marca imediatamente para nunca mais repetir
                         dialogBox.innerHTML = "Catie: Au au!";
@@ -1644,7 +2293,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                                 
                                 setTimeout(() => {
                                     if (cenarioAtual === "sala" && !temChave && !chaveUsada && !faseOutroMundo) {
-                                        dialogBox.innerHTML = "Encontre a chave";
+                                        dialogBox.innerHTML = "Encontre a chave (Clicando com o botão A nas gavetas)";
                                     }
                                 }, 2500); 
                             }
@@ -1655,7 +2304,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
             if (cenarioAtual === "cozinha" && missaoChaveAtiva && !temChave && !faseOutroMundo) {
                 if (dialogBox.innerHTML.indexOf("chave") === -1) {
-                    dialogBox.innerHTML = "Encontre a chave"; 
+                    dialogBox.innerHTML = "Encontre a chave (Clicando com o botão A nas gavetas)"; 
                 }
             }
 
@@ -1686,7 +2335,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             ctx.save(); 
             
             if (chaveUsada && !jumpScareCenarioAtivo) {
-                ctx.filter = "brightness(55%) contrast(130%) sepia(20%)";
+                ctx.filter = "brightness(65%) contrast(130%) sepia(20%)";
             } else {
                 ctx.filter = "none"; 
             }
@@ -1698,8 +2347,8 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 desenharImagem(npc.img, npc.x, npc.y, 110, 190, false); 
             }
 
-            desenharImagem(currentImgDog, dogX, dogY, 120, 120, isFacingLeft); 
-            desenharImagem(currentImgPlayer, playerX, playerY, 120, 120, isFacingLeft);
+            desenharImagem(currentImgDog, dogX, dogY, 100, 100, isFacingLeft); 
+            desenharImagem(currentImgPlayer, playerX, playerY, 110, 110, isFacingLeft);
             
             ctx.restore(); 
 
@@ -1755,7 +2404,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
         // Eventos de Teclado (PC)
         window.addEventListener('keydown', (e) => {
-            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo || jumpScareCenarioAtivo) return;
+            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo || jumpScareCenarioAtivo || pcAtivo) return;
 
             let direcaoIntencao = ""; 
 
@@ -1793,10 +2442,16 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
         });
 
         // AÇÃO DO BOTÃO A
+
         function executarAcaoBotaoA(e) {
             if (e && e.cancelable) e.preventDefault(); 
 
             if (emTransicao || minigameOutroPaiAtivo) return;
+
+            if (cenarioAtual === "storage" && playerX >= 210 && playerX <= 330) {
+                abrirComputador();
+                return;
+            }
 
             if (faseApresentacao) {
                 indiceApresentacao++;
@@ -1860,16 +2515,26 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                     imgFundo.className = "";
                     imgTopo.className = "";
                     
+                    // DEVOLVE OS CONTROLES PARA A TELA:
+                    document.getElementById('joystickArea').style.display = 'grid';
+                    document.getElementById('inventoryBox').style.display = 'block';
+                    document.getElementById('btnFullscreen').style.display = 'flex'; 
+                    
                     faseApresentacao = false;
                     cenarioAtual = "sala";
                     playerX = 100;
                     
+                    dialogBox.classList.remove("dialogo-proximo"); // <--- REMOVE AQUI PARA VOLTAR AO LUGAR NOS CENÁRIOS
                     dialogBox.innerHTML = "Lalai: Preciso descobrir como escapar daqui... vou explorar os cômodos para ver se encontro alguém que possa me ajudar.";
                     updateGame(); 
                 }
                 return;
             }
 
+            // MUDANÇA IMPORTANTE AQUI:
+            // Removemos a chamada direta para abrir o PC daqui e delegamos TUDO para a função interagir().
+            // A função interagir() já tem a lógica de abrir o PC ou passar portas.
+            
             if (chaveUsada && cenarioAtual !== "sala") {
                 dialogBox.innerHTML = "Lalai: Este lugar é estranho... devo explorar.";
             }
@@ -1878,7 +2543,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             if (cenarioAtual === "cozinha" && missaoChaveAtiva && !temChave && !faseOutroMundo) {
                 if (playerX > 400) { 
                     temChave = true;
-                    dialogBox.innerHTML = "Lalai: Achei a chave!";
+                    dialogBox.innerHTML = "Lalai: Achei a chave! Agora so preciso voltar para a sala e abrir a porta secreta.";
                     keyIcon.style.display = "block";
                     animandoChave = true;
                     tempoAnimacaoChave = 0;
@@ -1886,17 +2551,36 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                     tocarSomItem(); 
                     return; 
                 } else {
-                    dialogBox.innerHTML = "Lalai: A chave deve estar no outro canto da cozinha...";
+                    dialogBox.innerHTML = "Lalai: A chave deve estar nas últimas gavetas da cozinha...";
                     return; 
                 }
             }
 
             // TENTA ABRIR A PORTA SECRETA NA SALA COM A CHAVE
-            if (cenarioAtual === "sala" && playerX > 640 && !faseOutroMundo) {
+            if (cenarioAtual === "sala" && playerX > 480 && !faseOutroMundo) {
                 if (temChave && !chaveUsada) {
                     chaveUsada = true; 
                     keyIcon.style.display = "none"; 
                     iniciarAnimacaoTunel();
+                    setTimeout(() => {
+                tunelGif.style.display = "none";
+                canvas.style.display = "block";
+                
+                faseOutroMundo = true; 
+                faseApresentacao = true; 
+                indiceApresentacao = 0; 
+                emTransicao = false;
+                
+                ctx.imageSmoothingEnabled = false;
+                ctx.fillStyle = "#0d0914";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                portraitContainer.style.display = "none";
+
+                dialogBox.style.display = "flex";
+                dialogBox.classList.add("dialogo-proximo"); // <--- ADICIONA AQUI PARA FICAR PERTO DA MOLDURA
+                dialogBox.innerHTML = "Lalai: Há portas que jamais deveriam ser abertas... e eu acabei de abrir uma delas."; 
+            }, 3000);
                     return;
                 } else if (!temChave) {
                     dialogBox.innerHTML = "Lalai: Tem algo estranho com essa porta, onde estará a chave?";
@@ -1904,8 +2588,9 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 }
             }
 
+            // SE NÃO FEZ NENHUMA AÇÃO ESPECÍFICA ACIMA, TENTA INTERAGIR COM O AMBIENTE (NPCs, Portas ou PC)
             interagir();
-        }  
+        } 
 
         // Ligar a função ao Botão A identificando o 'Toque' real no ecrã e não um clique virtual
         const btnA = document.getElementById('btnA');
