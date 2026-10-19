@@ -931,11 +931,11 @@
             },
             {
                 icone: "Gato Risonho sem fundo.png",
-                pergunta: "O Gato Risonho avisou: 'Para quem não sabe para onde vai, qualquer caminho serve.' Você rastejou por aquela porta secreta sem rumo, apenas fugindo da sua vida chata. Se você nem sabia para onde estava indo, qual é a diferença de ficar presa aqui?",
+                pergunta: "O Gato Risonho avisou: 'Para quem não sabe para onde vai, qualquer caminho serve.' Você rastejou por aquela porta secreta sem rumo, apenas fugindo da sua vida chata. Se você nem sabia para onde estava indo, não é melhor ficar aqui conosco?",
                 opcoes: [
-                    { texto: "A) Nenhuma... eu só queria fugir da solidão, então qualquer lugar com carinho serve.", rebelde: false, feedback: "Viu só? Quando você não sabe para onde vai, o nosso abraço é o único destino seguro que lhe resta..." },
-                    { texto: "B) Faz toda a diferença! Eu sei exatamente para onde vou: vou voltar para casa!", rebelde: true, feedback: "NÃO HÁ PARA ONDE FUGIR! VOCÊ JÁ ESTA PRESA NA ESCURIDÃO." },
-                    { texto: "C) Nenhuma... se a Outra Mãe me quer aqui, esse é o único caminho que importa.", rebelde: false, feedback: "Viu só? Quando você não sabe para onde vai, o nosso abraço é o único destino seguro que lhe resta..." },
+                    { texto: "A) Sim... eu só queria fugir da solidão, então qualquer lugar com carinho serve.", rebelde: false, feedback: "Viu só? Quando você não sabe para onde vai, o nosso abraço é o único destino seguro que lhe resta..." },
+                    { texto: "B) Não! Eu sei exatamente para onde vou: vou voltar para casa!", rebelde: true, feedback: "NÃO HÁ PARA ONDE FUGIR! VOCÊ JÁ ESTA PRESA NA ESCURIDÃO." },
+                    { texto: "C) Sim... se a Outra Mãe me quer aqui, esse é o único caminho que importa.", rebelde: false, feedback: "Viu só? Quando você não sabe para onde vai, o nosso abraço é o único destino seguro que lhe resta..." },
                 ]
             },
             {
@@ -1773,21 +1773,28 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
             if (opcao === 'A') {
                 pararSomSuspense();
-                mostrarOpcoesPrincipais(); 
+                choiceContainer.style.display = "none"; 
                 fundoDaSala.classList.remove("obscuro"); 
+                
+                dialogBoxLalai.style.display = "block";
                 dialogBoxLalai.innerHTML = "Haha... sim, muito engraçado."; 
 
                 agendar(() => {
                     dialogBoxLalai.style.display = "none"; 
                     agendar(() => {
                         mudarRetratoOutroPai("happy.png"); 
+                        
+                        // Mostra a piada atual da lista rotativa
                         dialogBoxPai.innerHTML = loopPiadas[piadaAtual]; 
                         dialogBoxPai.style.display = "block"; 
+                  
                         piadaAtual++;
                         if (piadaAtual >= loopPiadas.length) piadaAtual = 0; 
+                        
+                        choiceContainer.style.display = "flex";
                     }, 150); 
                 }, 3500); 
-            } 
+            }
             else if (opcao === 'B') {
                 choiceContainer.innerHTML = `
                     <button class="btn-choice" onclick="escolhaMinigame('B1')">Recuar e ouvir outra piada</button>
@@ -1838,8 +1845,8 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 
                 agendar(() => {
                     tocarSomSusto(); 
-                    
                     mudarRetratoOutroPai("jumpscare.png", "susto"); 
+
                     dialogBoxPai.classList.add("desespero");
                     dialogBoxPai.innerHTML = "ElA Te OuViu!!!!";
                     flashScreen.classList.add("strobe");
@@ -1944,10 +1951,12 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
                         agendar(() => {
                             dialogBoxPai.innerHTML = "ANORMALIDADE DETECTADA";
+                           tocarSomErro();
 
                             agendar(() => {
                                 tocarSomSusto();
                                 mudarRetratoOutroPai("jumpscare.png", "susto");
+
                                 dialogBoxPai.classList.add("desespero");
                                 portraitFrame.classList.add("desespero");
                                 dialogBoxPai.innerHTML = "ElA Te OuViu!!!!";
@@ -2404,6 +2413,11 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
         // Eventos de Teclado (PC)
         window.addEventListener('keydown', (e) => {
+            if (faseApresentacao && (e.key === ' ' || e.key === 'Space' || e.key === 'Enter' || e.key === 'e' || e.key === 'E')) {
+                executarAcaoBotaoA(e);
+                return;
+            }
+
             if (emTransicao || faseApresentacao || minigameOutroPaiAtivo || jumpScareCenarioAtivo || pcAtivo) return;
 
             let direcaoIntencao = ""; 
@@ -2429,9 +2443,9 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 tentarMudarCenario(direcaoIntencao);
             }
 
-            if(e.key === 'e' || e.key === 'E' || e.key === ' ') { 
-                interagir(); 
-            } 
+            if(e.key === 'e' || e.key === 'E' || e.key === ' ' || e.key === 'Space') { 
+                executarAcaoBotaoA(e); 
+            }
         });
 
         window.addEventListener('keyup', (e) => {
@@ -2444,7 +2458,12 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
         // AÇÃO DO BOTÃO A
 
         function executarAcaoBotaoA(e) {
-            if (e && e.cancelable) e.preventDefault(); 
+            if (e) {
+                if (e.cancelable) e.preventDefault();
+                if (e.type === 'keydown' && e.key !== ' ' && e.key !== 'Space' && e.key !== 'Enter' && e.key !== 'e' && e.key !== 'E') {
+                    return;
+                }
+            } 
 
             if (emTransicao || minigameOutroPaiAtivo) return;
 
