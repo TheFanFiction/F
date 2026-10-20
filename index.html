@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fan Fiction</title>
     <style>
+        .texto-assustado {
+            color: #ff4444 !important;
+            font-style: italic;
+            animation: tremerCaixa 0.1s infinite;
+        }
+
+        @keyframes tremerCaixa {
+            0% { transform: translateX(-50%) translate(2px, 1px) rotate(0deg); }
+            10% { transform: translateX(-50%) translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translateX(-50%) translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translateX(-50%) translate(3px, 2px) rotate(0deg); }
+            40% { transform: translateX(-50%) translate(1px, -1px) rotate(1deg); }
+            50% { transform: translateX(-50%) translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translateX(-50%) translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translateX(-50%) translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translateX(-50%) translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translateX(-50%) translate(1px, 2px) rotate(0deg); }
+            100% { transform: translateX(-50%) translate(1px, -2px) rotate(-1deg); }
+        }
         body {
             background-color: #000; 
             color: #fceea7;
@@ -430,7 +449,7 @@
             opacity: 0;
             pointer-events: none;
             z-index: 50;
-            transition: opacity 0.1s;
+            transition: opacity 0.8s;
         }
 
         /* INVENTÁRIO MAIOR */
@@ -1271,9 +1290,10 @@
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const ctxAudio = new AudioContext();
 
-  
+            dialogBox.classList.remove("texto-assustado", "dialogo-proximo");
+            dialogBox.style.display = "block";
+
             tocarSomEstrondo(ctxAudio);
-            
         
             const canvasEl = document.getElementById('gameCanvas');
             canvasEl.classList.add("shake-screen");
@@ -1290,18 +1310,19 @@
 
         
             agendar(() => {
+                dialogBox.classList.remove("texto-assustado");
                 dialogBox.innerHTML = "Lalai: O que está acontecendo? Eu não consigo ver nada!";
 
         
                 agendar(() => {
                     tocarSomPortaRealista(ctxAudio);
-                    dialogBox.innerHTML = "* Rangido metálico de uma porta se abrindo na sala ao lado *";
+                    dialogBox.innerHTML = "* Rangido metálico de uma porta se abrindo *";
                     
                     agendar(() => {
                         dialogBox.innerHTML = "Lalai: ...O-quê? De onde veio esse som?";
                         
                         agendar(() => {
-                            dialogBox.innerHTML = "* Passos lentos e arrastados ecoam no chão... *";
+                            dialogBox.innerHTML = "* Passos lentos ecoam no chão... *";
                             
                             let tempoAtual = ctxAudio.currentTime;
                             for(let i = 0; i < 5; i++) {
@@ -1310,12 +1331,13 @@
                             }
                             
                             agendar(() => {
-                                dialogBox.innerHTML = "* ELE ESTÁ CORRENDO NA MINHA DIREÇÃO! *";
-                                
-                                let tempoCorrida = ctxAudio.currentTime;
-                                for(let i = 0; i < 8; i++) {
-                                    tocarPassoUnico(ctxAudio, tempoCorrida + (i * 0.18), 1.2);
-                                }
+                            dialogBox.classList.add("texto-assustado");
+                            dialogBox.innerHTML = "* ELE ESTÁ CORRENDO NA MINHA DIREÇÃO! *";
+                            
+                            let tempoCorrida = ctxAudio.currentTime;
+                            for(let i = 0; i < 8; i++) {
+                                tocarPassoUnico(ctxAudio, tempoCorrida + (i * 0.18), 1.2);
+                            }
                                 
                                 agendar(() => {
                                     outroPaiPortrait.src = "jumpscare.png";
@@ -1872,13 +1894,14 @@
                         playerX = porta.spawnX !== undefined ? porta.spawnX : 100;
                         dogX = playerX + (isFacingLeft ? 65 : -65);
                         
-                        if (origem === "escadaria" && cenarioAtual === "sala" && missaoBobinskyAtiva && !emboscadaSalaDisparada) {
-                            pararMusicaMundoReal();
-                        }
-
-                        if (cenarioAtual === "storage" && chaveUsada) {
+                        if (cenarioAtual === "storage" && chaveUsada && !missaoBobinskyAtiva) {
                             dialogBox.style.display = "block";
                             dialogBox.innerHTML = "Lalai: Ele está tão estranho... Por que ele está ali parado?";
+                        }
+            
+                        else if (origem === "storage" && cenarioAtual === "escadaria" && missaoBobinskyAtiva) {
+                            dialogBox.style.display = "block";
+                            dialogBox.innerHTML = "Lalai: Preciso encontrar o Sr. Bobinsky e descobrir sobre essas fendas...";
                         }
 
                         return;
@@ -1968,9 +1991,9 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             dialogBoxPai.style.display = "block";
 
             choiceContainer.innerHTML = `
-                <button class="btn-choice" onclick="escolhaMinigame('A')">A) Forçar o riso</button>
-                <button class="btn-choice" onclick="escolhaMinigame('B')">B) Séria e direta</button>
-                <button class="btn-choice" onclick="escolhaMinigame('C')">C) Contar outra piada pra ele</button>
+                <button class="btn-choice" onclick="escolhaMinigame('A')">Forçar o riso</button>
+                <button class="btn-choice" onclick="escolhaMinigame('B')">Séria e direta</button>
+                <button class="btn-choice" onclick="escolhaMinigame('C')">Contar outra piada pra ele</button>
             `;
             choiceContainer.style.display = "flex";
         }
@@ -2325,9 +2348,8 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 saiuDoMinigame = false; 
                 
                 missaoBobinskyAtiva = true;
-                
-                dialogBox.style.display = "block";
-                dialogBox.innerHTML = "Lalai: Preciso encontrar o Sr. Bobinsky e descobrir sobre essas fendas...";
+
+                dialogBox.style.display = "none";
                 
                 updateGame();
                 return; 
@@ -2507,22 +2529,24 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             if (playerY < limiteChao) playerY = limiteChao; 
             if (playerY > canvas.height - 90) playerY = canvas.height - 90;
 
-            // MISSÃO DA CHAVE E PORTA SECRETA (EXECUTA APENAS UMA VEZ EM TODO O JOGO)
+            // MISSÃO DA CHAVE E PORTA SECRETA NA SALA (MUNDO REAL)
             if (cenarioAtual === "sala" && !faseOutroMundo) {
                 if (playerX > 480) { 
-                    // Verificamos se !avisoPortaFeito é verdadeiro... isto dá falso e nunca mais entra.
                     if (!temChave && !avisoPortaFeito) {
-                        avisoPortaFeito = true; // Marca imediatamente para nunca mais repetir
+                        avisoPortaFeito = true; 
+                        dialogBox.style.display = "block"; 
                         dialogBox.innerHTML = "Catie: Au au!";
                         missaoChaveAtiva = true; 
 
                         setTimeout(() => {
                             if (cenarioAtual === "sala" && !temChave && !chaveUsada && !faseOutroMundo) {
+                                dialogBox.style.display = "block"; 
                                 dialogBox.innerHTML = "Lalai: Tem algo estranho com essa porta... onde estará a chave?";
                                 
                                 setTimeout(() => {
                                     if (cenarioAtual === "sala" && !temChave && !chaveUsada && !faseOutroMundo) {
-                                        dialogBox.innerHTML = "Encontre a chave (Clicando com o botão A nas gavetas)";
+                                        dialogBox.style.display = "block"; 
+                                        dialogBox.innerHTML = "Encontre a chave (clicando com o botão A nas gavetas)";
                                     }
                                 }, 2500); 
                             }
@@ -2770,12 +2794,6 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 return;
             }
 
-            
-            if (chaveUsada && cenarioAtual !== "sala") {
-                dialogBox.innerHTML = "Lalai: Este lugar é estranho... devo explorar.";
-            }
-
-            // TENTA APANHAR A CHAVE NA COZINHA
             if (cenarioAtual === "cozinha" && missaoChaveAtiva && !temChave && !faseOutroMundo) {
                 if (playerX > 400) { 
                     temChave = true;
