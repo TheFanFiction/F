@@ -824,6 +824,14 @@
         
         <div class="action-buttons">
             <button id="btnA" class="btn-action">A</button>
+        </div> 
+
+        <div id="telaPretaFase2" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: black; display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; transition: opacity 3s ease-in-out; pointer-events: none;">
+            <div style="color: #ffaaaa; font-size: 18px; text-align: center; line-height: 1.8; max-width: 80%; text-shadow: 2px 2px 5px rgba(255,0,0,0.5);">
+                Você fez perguntas demais.<br><br>
+                A Lalai foi levada para a escuridão...<br><br>
+                <span style="color: #fff;">O Catie fugiu e acordou sozinho nos dutos de ventilação.</span>
+            </div>
         </div>
     </div>
 <!-- CENA INTRODUTÓRIA DO COMPUTADOR -->
@@ -1248,6 +1256,102 @@
         let sustoOfficeFeito = false;
         let jumpScareCenarioAtivo = false;
         let missaoBobinskyAtiva = false;
+        let emboscadaSalaDisparada = false;
+
+       function dispararEmboscadaSala() {
+            if (emboscadaSalaDisparada) return;
+            emboscadaSalaDisparada = true;
+
+            emTransicao = true;
+            movingLeft = false; movingRight = false; movingUp = false; movingDown = false;
+
+            pararTemaCaixinhaDeMusica();
+            pararSomSuspense();
+
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const ctxAudio = new AudioContext();
+
+  
+            tocarSomEstrondo(ctxAudio);
+            
+        
+            const canvasEl = document.getElementById('gameCanvas');
+            canvasEl.classList.add("shake-screen");
+            canvasEl.classList.add("obscuro");
+
+            dialogBox.style.display = "block";
+            dialogBox.classList.add("texto-assustado");
+            dialogBox.innerHTML = "Lalai: Que... que estrondo foi esse?";
+
+         
+            setTimeout(() => {
+                canvasEl.classList.remove("shake-screen");
+            }, 600);
+
+        
+            agendar(() => {
+                dialogBox.innerHTML = "Lalai: O que está acontecendo? Eu não consigo ver nada!";
+
+        
+                agendar(() => {
+                    tocarSomPortaRealista(ctxAudio);
+                    dialogBox.innerHTML = "* Rangido metálico de uma porta se abrindo na sala ao lado *";
+                    
+                    agendar(() => {
+                        dialogBox.innerHTML = "Lalai: ...O-quê? De onde veio esse som?";
+                        
+                        agendar(() => {
+                            dialogBox.innerHTML = "* Passos lentos e arrastados ecoam no chão... *";
+                            
+                            let tempoAtual = ctxAudio.currentTime;
+                            for(let i = 0; i < 5; i++) {
+                                let volume = 0.2 + (0.15 * i);
+                                tocarPassoUnico(ctxAudio, tempoAtual + (i * 0.65), volume);
+                            }
+                            
+                            agendar(() => {
+                                dialogBox.innerHTML = "* ELE ESTÁ CORRENDO NA MINHA DIREÇÃO! *";
+                                
+                                let tempoCorrida = ctxAudio.currentTime;
+                                for(let i = 0; i < 8; i++) {
+                                    tocarPassoUnico(ctxAudio, tempoCorrida + (i * 0.18), 1.2);
+                                }
+                                
+                                agendar(() => {
+                                    outroPaiPortrait.src = "jumpscare.png";
+                                    portraitFrame.style.display = "block";
+                                    portraitFrame.classList.add("jumpscare");
+                                    
+                                    portraitFrame.classList.add("strobe");
+                                    flashScreen.style.backgroundColor = "black";
+                                    flashScreen.style.opacity = "1";
+                                    
+                                    dialogBox.style.display = "none";
+                                    
+                                    tocarSomSusto();
+
+                                    agendar(() => {
+                                        flashScreen.classList.remove("strobe");
+                                        flashScreen.style.opacity = "1";
+                                        flashScreen.style.backgroundColor = "black";
+                                        portraitFrame.style.display = "none";
+                                        portraitFrame.classList.remove("strobe");
+                                        
+                                        agendar(() => {
+                                            document.getElementById('telaPretaFase2').style.opacity = "1";
+                                        }, 1500);
+
+                                    }, 4000);
+
+                                }, 8 * 180);
+
+                            }, 5 * 650);
+                        }, 1500);
+                    }, 2500);
+                }, 3000);
+
+            }, 2000); 
+        }
 
         const loopPiadas = [
             "Sabia que você ia adorar! Aqui vai mais uma: Você sabe qual é a fruta que fica pulando de galho em galho? É o morangotango! HA HA HA!",
@@ -1372,7 +1476,7 @@
             mundoRealInterval = setInterval(tocarPassoLoFi, 400); 
         }
 
-        // FADE OUT SUAVE DA MÚSICA DO MUNDO REAL (Dura 2 segundos)
+    
         function fadeOutMusicaMundoReal() {
             if (mundoRealCtx && mundoRealGainNode) {
                 mundoRealGainNode.gain.linearRampToValueAtTime(0.001, mundoRealCtx.currentTime + 2.0);
@@ -1439,7 +1543,6 @@
             if (!AudioContext) return;
             const audioCtx = new AudioContext();
             
-            // Duas ondas combinadas para criar um som metálico, estridente e aterrorizante
             const osc1 = audioCtx.createOscillator();
             const osc2 = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -1466,6 +1569,114 @@
             osc2.start();
             osc1.stop(audioCtx.currentTime + 0.6);
             osc2.stop(audioCtx.currentTime + 0.6);
+        }
+    function tocarSomEstrondo(ctxAudio) {
+            const duration = 1.5;
+            const tempoBase = ctxAudio.currentTime;
+
+            // Sub-grave profundo para o impacto do estrondo
+            const osc = ctxAudio.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(80, tempoBase);
+            osc.frequency.exponentialRampToValueAtTime(15, tempoBase + duration);
+
+            const gainNode = ctxAudio.createGain();
+            gainNode.gain.setValueAtTime(0.8, tempoBase);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, tempoBase + duration);
+
+            osc.connect(gainNode);
+            gainNode.connect(ctxAudio.destination);
+            osc.start(tempoBase);
+            osc.stop(tempoBase + duration);
+        }
+        function criarRuidoBranco(contexto) {
+            const bufferSize = contexto.sampleRate * 2;
+            const buffer = contexto.createBuffer(1, bufferSize, contexto.sampleRate);
+            const dados = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                dados[i] = Math.random() * 2 - 1;
+            }
+            return buffer;
+        }
+
+        // SÍNTESE DA PORTA A RANGER
+        function tocarSomPortaRealista(ctxAudio) {
+            const duration = 2.0;
+            const tempoBase = ctxAudio.currentTime;
+            const ruidoSrc = ctxAudio.createBufferSource();
+            ruidoSrc.buffer = criarRuidoBranco(ctxAudio);
+            
+            const filtroRuido = ctxAudio.createBiquadFilter();
+            filtroRuido.type = 'bandpass';
+            filtroRuido.frequency.setValueAtTime(300, tempoBase);
+            filtroRuido.frequency.exponentialRampToValueAtTime(800, tempoBase + duration);
+            filtroRuido.Q.value = 15;
+            
+            const gainRuido = ctxAudio.createGain();
+            gainRuido.gain.setValueAtTime(0, tempoBase);
+            gainRuido.gain.linearRampToValueAtTime(0.6, tempoBase + 0.2);
+            gainRuido.gain.exponentialRampToValueAtTime(0.01, tempoBase + duration);
+
+            ruidoSrc.connect(filtroRuido);
+            filtroRuido.connect(gainRuido);
+            gainRuido.connect(ctxAudio.destination);
+            ruidoSrc.start(tempoBase);
+            ruidoSrc.stop(tempoBase + duration);
+
+            const osc = ctxAudio.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(90, tempoBase);
+            osc.frequency.exponentialRampToValueAtTime(30, tempoBase + duration);
+            
+            const gainOsc = ctxAudio.createGain();
+            gainOsc.gain.setValueAtTime(0, tempoBase);
+            gainOsc.gain.linearRampToValueAtTime(0.4, tempoBase + 0.3);
+            gainOsc.gain.exponentialRampToValueAtTime(0.01, tempoBase + duration);
+
+            osc.connect(gainOsc);
+            gainOsc.connect(ctxAudio.destination);
+            osc.start(tempoBase);
+            osc.stop(tempoBase + duration);
+        }
+
+        // SÍNTESE DO PASSO
+        function tocarPassoUnico(ctxAudio, tempoExato, volumeMultiplicador) {
+            const duracaoGrave = 0.08;
+            const duracaoAgudo = 0.04;
+
+            const oscImpacto = ctxAudio.createOscillator();
+            oscImpacto.type = 'sine';
+            oscImpacto.frequency.setValueAtTime(120, tempoExato);
+            oscImpacto.frequency.exponentialRampToValueAtTime(20, tempoExato + duracaoGrave);
+            
+            const gainImpacto = ctxAudio.createGain();
+            gainImpacto.gain.setValueAtTime(0, tempoExato);
+            gainImpacto.gain.linearRampToValueAtTime(1.0 * volumeMultiplicador, tempoExato + 0.01);
+            gainImpacto.gain.exponentialRampToValueAtTime(0.01, tempoExato + duracaoGrave);
+
+            oscImpacto.connect(gainImpacto);
+            gainImpacto.connect(ctxAudio.destination);
+            oscImpacto.start(tempoExato);
+            oscImpacto.stop(tempoExato + duracaoGrave);
+
+            const ruidoSrc = ctxAudio.createBufferSource();
+            ruidoSrc.buffer = criarRuidoBranco(ctxAudio);
+            
+            const filtroSola = ctxAudio.createBiquadFilter();
+            filtroSola.type = 'bandpass';
+            filtroSola.frequency.value = 1200;
+            filtroSola.Q.value = 1.5;
+            
+            const gainSola = ctxAudio.createGain();
+            gainSola.gain.setValueAtTime(0, tempoExato);
+            gainSola.gain.linearRampToValueAtTime(0.5 * volumeMultiplicador, tempoExato + 0.01);
+            gainSola.gain.exponentialRampToValueAtTime(0.01, tempoExato + duracaoAgudo);
+
+            ruidoSrc.connect(filtroSola);
+            filtroSola.connect(gainSola);
+            gainSola.connect(ctxAudio.destination);
+            ruidoSrc.start(tempoExato);
+            ruidoSrc.stop(tempoExato + duracaoAgudo);
         }
         function tocarSomErro() {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1645,7 +1856,6 @@
             }
         };
 
-        // FUNÇÃO PARA MUDANÇA DE CENÁRIO POR BOTÃO DE MOVIMENTO OU AÇÃO
         function tentarMudarCenario(teclaPressionada) {
             if (emTransicao || faseApresentacao || minigameOutroPaiAtivo) return; 
 
@@ -1657,20 +1867,24 @@
                 if (playerX >= porta.x && playerX <= (porta.x + porta.largura)) {
                     if (porta.gatilho === teclaPressionada || teclaPressionada === "acao") {
                         
+                        let origem = cenarioAtual;
                         cenarioAtual = porta.destino;
                         playerX = porta.spawnX !== undefined ? porta.spawnX : 100;
                         dogX = playerX + (isFacingLeft ? 65 : -65);
                         
-                        // TEXTO DA LALAI QUANDO ENTRA NA OFFICE
+                        if (origem === "escadaria" && cenarioAtual === "sala" && missaoBobinskyAtiva && !emboscadaSalaDisparada) {
+                            pararMusicaMundoReal();
+                        }
+
                         if (cenarioAtual === "storage" && chaveUsada) {
                             dialogBox.style.display = "block";
                             dialogBox.innerHTML = "Lalai: Ele está tão estranho... Por que ele está ali parado?";
                         }
 
                         return;
+                    }
                 }
             }
-        }
         }
 
        // FUNÇÃO PARA FALAR COM NPCS / INTERAGIR
@@ -2254,9 +2468,8 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 isStepFrame = false; 
                 animCounter = 0;
             }
-            // SENSOR 1: Escadaria Assombrada (Dispara apenas quando ela avança da esquerda para a direita)
+            // SENSOR 1: Escadaria Assombrada
             if (faseOutroMundo && cenarioAtual === "escadaria" && !sustoEscadariaFeito && !jumpScareCenarioAtivo) {
-                // Ajustado para disparar mais à frente (entre 350 e 400), garantindo que ela já saiu do ponto de spawn
                 if (playerX > 350 && playerX < 400) {
                     sustoEscadariaFeito = true; 
                     movingLeft = false; movingRight = false; movingUp = false; movingDown = false; 
@@ -2264,13 +2477,20 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 }
             }
 
-            // SENSOR 2: Office Assombrado (Só dispara se a missão do Bobinsky estiver ativa)
+            // SENSOR 2: Office Assombrado
             if (faseOutroMundo && cenarioAtual === "storage" && !sustoOfficeFeito && !jumpScareCenarioAtivo) {
                 // Exige que a missão esteja ativa E que a Lalai caminhe para a porta (X < 300 e movingLeft)
                 if (missaoBobinskyAtiva && playerX < 300 && movingLeft) {
                     sustoOfficeFeito = true; 
                     movingLeft = false; movingRight = false; movingUp = false; movingDown = false; 
                     dispararJumpscareCenario(imgOfficeAssombrado);
+                }
+            }
+
+            if (faseOutroMundo && cenarioAtual === "sala" && missaoBobinskyAtiva && !emboscadaSalaDisparada) {
+                if (playerX > 150) { 
+                    dispararEmboscadaSala();
+                    return;
                 }
             }
 
@@ -2543,16 +2763,13 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                     cenarioAtual = "sala";
                     playerX = 100;
                     
-                    dialogBox.classList.remove("dialogo-proximo"); // <--- REMOVE AQUI PARA VOLTAR AO LUGAR NOS CENÁRIOS
+                    dialogBox.classList.remove("dialogo-proximo");
                     dialogBox.innerHTML = "Lalai: Preciso descobrir como escapar daqui... vou explorar os cômodos para ver se encontro alguém que possa me ajudar.";
                     updateGame(); 
                 }
                 return;
             }
 
-            // MUDANÇA IMPORTANTE AQUI:
-            // Removemos a chamada direta para abrir o PC daqui e delegamos TUDO para a função interagir().
-            // A função interagir() já tem a lógica de abrir o PC ou passar portas.
             
             if (chaveUsada && cenarioAtual !== "sala") {
                 dialogBox.innerHTML = "Lalai: Este lugar é estranho... devo explorar.";
@@ -2575,7 +2792,6 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 }
             }
 
-            // TENTA ABRIR A PORTA SECRETA NA SALA COM A CHAVE
             if (cenarioAtual === "sala" && playerX > 480 && !faseOutroMundo) {
                 if (temChave && !chaveUsada) {
                     chaveUsada = true; 
@@ -2597,7 +2813,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 portraitContainer.style.display = "none";
 
                 dialogBox.style.display = "flex";
-                dialogBox.classList.add("dialogo-proximo"); // <--- ADICIONA AQUI PARA FICAR PERTO DA MOLDURA
+                dialogBox.classList.add("dialogo-proximo");
                 dialogBox.innerHTML = "Lalai: Há portas que jamais deveriam ser abertas... e eu acabei de abrir uma delas."; 
             }, 3000);
                     return;
@@ -2607,11 +2823,10 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 }
             }
 
-            // SE NÃO FEZ NENHUMA AÇÃO ESPECÍFICA ACIMA, TENTA INTERAGIR COM O AMBIENTE (NPCs, Portas ou PC)
+
             interagir();
         } 
 
-        // Ligar a função ao Botão A identificando o 'Toque' real no ecrã e não um clique virtual
         const btnA = document.getElementById('btnA');
         btnA.addEventListener('touchstart', executarAcaoBotaoA, { passive: false }); // Para os Telemóveis/Tablets
         btnA.addEventListener('mousedown', executarAcaoBotaoA); // Para quem jogar no PC
