@@ -59,6 +59,7 @@
   function criar() {
     var ctx = null;
     var mestre = null;
+    var espaco = null;
     var volume = 0.75;
     var instrumentos = {};
     var promessas = {};
@@ -83,10 +84,28 @@
         ctx = new AC();
         mestre = ctx.createGain();
         mestre.gain.value = volume;
-        mestre.connect(ctx.destination);
+        // "Espaço" fica depois do mestre: recua a música para um efeito sem
+        // interferir no volume nem nos fades de transição. Em repouso, ganho 1.
+        espaco = ctx.createGain();
+        mestre.connect(espaco);
+        espaco.connect(ctx.destination);
       }
-      if (ctx.state === 'suspended') ctx.resume();
+      // Antes do primeiro gesto o navegador recusa; a mixagem tenta de novo no gesto.
+      if (ctx.state === 'suspended') {
+        var r = ctx.resume();
+        if (r && r.catch) r.catch(function () {});
+      }
       return ctx;
+    }
+
+    function abrirEspaco(nivel, ataque, duracao, soltura) {
+      if (!ctx) return;
+      var g = espaco.gain, t = ctx.currentTime;
+      g.cancelScheduledValues(t);
+      g.setValueAtTime(g.value, t);
+      g.linearRampToValueAtTime(nivel, t + ataque);
+      g.setValueAtTime(nivel, t + ataque + duracao);
+      g.linearRampToValueAtTime(1, t + ataque + duracao + soltura);
     }
 
     function rampa(param, alvo, dur) {
@@ -410,6 +429,19 @@
       st.ancora = { beat: P, tempo: tP };
       st.bpm = bpmEm(st.perfil, rel);
       marcar(P, tP);
+      if (comTransicao) retomarSustentadas(rel, tP);
+    }
+
+    // Numa troca no meio de um acorde, as notas longas da nova atmosfera que já deveriam
+    // estar soando entram junto, para a harmonia não ficar vazia até o próximo acorde.
+    function retomarSustentadas(rel, tP) {
+      var evs = st.perfil.eventos;
+      for (var i = 0; i < evs.length && evs[i].b < rel - EPS; i++) {
+        var ev = evs[i];
+        var resta = ev.b + ev.d - rel;
+        if (ev.l === 'mel' || ev.d < 2 || resta < 1) continue;
+        tocarNota(ev, tP, resta * 60 / st.bpm, st.bus);
+      }
     }
 
     function podar(agora) {
@@ -503,7 +535,10 @@
       var c = st.cursor, ciclo = st.cicloInicio, p = st.perfil;
       var fimCiclo = ciclo + fimDoCiclo(p);
       var alvo = fimCiclo;
-      if (modo === 'imediata') {
+      if (modo === 'agora') {
+        // Logo após o que já está agendado (~0,35 s): para trocas ligadas a eventos da cena.
+        alvo = Math.min(c + 0.01, fimCiclo);
+      } else if (modo === 'imediata') {
         alvo = Math.min(Math.floor(c + EPS) + 1, fimCiclo);
       } else {
         var pontos = modo === 'frase' ? p.frases : p.secoes.map(function (s) { return s.ini; });
@@ -512,7 +547,7 @@
           if (abs > c + EPS && abs < fimCiclo - EPS) { alvo = abs; break; }
         }
       }
-      var imediata = modo === 'imediata';
+      var imediata = modo === 'imediata' || modo === 'agora';
       st.pendente = {
         perfil: perfil, beat: alvo, modo: modo,
         fadeSaida: Math.max(0.05, opcoes.fadeSaida != null ? opcoes.fadeSaida : (imediata ? 2.0 : 1.2)),
@@ -586,6 +621,7 @@
       cancelarTransicao: cancelarTransicao,
       parar: parar,
       definirVolume: definirVolume,
+      abrirEspaco: abrirEspaco,
       definirLoop: definirLoop,
       ajustarCamada: ajustarCamada,
       estado: estado,

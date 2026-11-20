@@ -51,6 +51,13 @@
     if (adiada) { clearTimeout(adiada.timer); paradaAdiada = null; }
     if (adiada && motor.estado().perfilId === id) { alvo = id; pedido++; return; }
     if (alvo === id) return;
+    var est = motor.estado();
+    if (est.tocando && est.perfilId === id && est.pendente) {
+      motor.cancelarTransicao();
+      alvo = id;
+      pedido++;
+      return;
+    }
     alvo = id;
     var meu = ++pedido;
     var p = perfil(id);
@@ -59,7 +66,7 @@
       if (meu !== pedido) return;
       if (motor.estado().tocando) {
         motor.transicionar(p, {
-          modo: opcoes.modo || 'imediata',
+          modo: opcoes.modo || 'agora',
           fadeSaida: adiada ? adiada.fade : (opcoes.fadeSaida != null ? opcoes.fadeSaida : 2),
           fadeEntrada: opcoes.fadeEntrada != null ? opcoes.fadeEntrada : 2,
           loop: true
@@ -86,13 +93,24 @@
     if (alvo === id) parar(fade);
   }
 
+  function preparar(ids) {
+    try { motor.iniciar(); } catch (e) { return; }
+    ids.forEach(function (id) {
+      if (ATMOSFERAS.indexOf(id) >= 0) motor.preparar(perfil(id));
+    });
+  }
+
   global.MusicaJogo = {
     ATMOSFERAS: ATMOSFERAS,
+    VOLUME_BASE: 0.75,
     tocar: tocar,
     parar: parar,
     pararSe: pararSe,
+    preparar: preparar,
     atmosfera: function () { return alvo; },
+    transposicao: function () { return alvo ? perfil(alvo).transposicao : 0; },
     estado: motor.estado,
-    definirVolume: motor.definirVolume
+    definirVolume: motor.definirVolume,
+    abrirEspaco: motor.abrirEspaco
   };
 })(window);

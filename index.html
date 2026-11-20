@@ -45,7 +45,17 @@
     <div id="panelConfiguracoes" class="painel-menu">
         <div class="painel-conteudo">
             <h2 class="painel-titulo">Configurações</h2>
-            <p class="painel-texto">As configurações do jogo ainda estão sendo preparadas.<br>Em breve será possível ajustar o áudio e outras opções.</p>
+            <div class="controles-audio">
+                <label class="volume-linha"><span>Música</span><input type="range" min="0" max="100" step="5" data-volume="musica"><span data-volume-valor="musica"></span></label>
+                <label class="volume-linha"><span>Efeitos sonoros</span><input type="range" min="0" max="100" step="5" data-volume="efeitos"><span data-volume-valor="efeitos"></span></label>
+                <p class="volume-grupo">Efeitos específicos</p>
+                <label class="volume-linha volume-linha--especifica"><span>Sustos</span><input type="range" min="0" max="100" step="5" data-volume="susto"><span data-volume-valor="susto"></span></label>
+                <label class="volume-linha volume-linha--especifica"><span>Impactos e passos</span><input type="range" min="0" max="100" step="5" data-volume="impacto"><span data-volume-valor="impacto"></span></label>
+                <label class="volume-linha volume-linha--especifica"><span>Computador</span><input type="range" min="0" max="100" step="5" data-volume="computador"><span data-volume-valor="computador"></span></label>
+                <label class="volume-linha volume-linha--especifica"><span>Suspense e ambiente</span><input type="range" min="0" max="100" step="5" data-volume="suspense"><span data-volume-valor="suspense"></span></label>
+                <label class="volume-linha volume-linha--especifica"><span>Interface e digitação</span><input type="range" min="0" max="100" step="5" data-volume="interface"><span data-volume-valor="interface"></span></label>
+            </div>
+            <p class="painel-texto painel-texto--menor">Outras opções em breve.</p>
             <button class="btn-voltar" onclick="document.getElementById('panelConfiguracoes').style.display='none'; document.getElementById('bookCoverOpen').style.display='flex';">← Voltar</button>
         </div>
     </div>
@@ -144,6 +154,7 @@
     <script src="js/musica/lalai-aprovado.js"></script>
     <script src="js/musica/music-engine.js"></script>
     <script src="js/musica/musica-jogo.js"></script>
+    <script src="js/audio/mixagem.js"></script>
     <script src="js/game.js"></script>
 </body>
 </html>

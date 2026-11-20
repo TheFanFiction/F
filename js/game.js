@@ -195,26 +195,70 @@
             }, 500);
         }
 
+        // Abertura do computador: clique do interruptor, zumbido do monitor aquecendo e um
+        // acorde curto no tom da música atual (menor e levemente desafinado no Outro Mundo).
         function tocarSomLigar() {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(200, ctx.currentTime);
-            osc.frequency.linearRampToValueAtTime(800, ctx.currentTime + 0.3);
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.start(); osc.stop(ctx.currentTime + 0.5);
+            if (!window.MixagemAudio) return;
+            const ac = MixagemAudio.contexto();
+            const saida = MixagemAudio.saida('computador');
+            const t = ac.currentTime;
+            MixagemAudio.abrirEspaco(0.6, 1.6, 1.2);
+
+            const clique = ac.createBufferSource();
+            clique.buffer = criarRuidoBranco(ac);
+            const filtroClique = ac.createBiquadFilter();
+            filtroClique.type = 'bandpass';
+            filtroClique.frequency.value = 1600;
+            filtroClique.Q.value = 2;
+            const ganhoClique = ac.createGain();
+            ganhoClique.gain.setValueAtTime(0.1, t);
+            ganhoClique.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+            clique.connect(filtroClique); filtroClique.connect(ganhoClique); ganhoClique.connect(saida);
+            clique.start(t); clique.stop(t + 0.05);
+
+            const zumbido = ac.createOscillator();
+            zumbido.type = 'triangle';
+            zumbido.frequency.setValueAtTime(110, t);
+            zumbido.frequency.linearRampToValueAtTime(120, t + 0.8);
+            const filtroZumbido = ac.createBiquadFilter();
+            filtroZumbido.type = 'lowpass';
+            filtroZumbido.frequency.value = 500;
+            const ganhoZumbido = ac.createGain();
+            ganhoZumbido.gain.setValueAtTime(0, t);
+            ganhoZumbido.gain.linearRampToValueAtTime(0.05, t + 0.4);
+            ganhoZumbido.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
+            zumbido.connect(filtroZumbido); filtroZumbido.connect(ganhoZumbido); ganhoZumbido.connect(saida);
+            zumbido.start(t); zumbido.stop(t + 1.9);
+
+            const tonica = 466.16 * Math.pow(2, (window.MusicaJogo ? MusicaJogo.transposicao() : 0) / 12);
+            const intervalos = isOutroMundo ? [0, 3, 7] : [0, 4, 7];
+            const filtroAcorde = ac.createBiquadFilter();
+            filtroAcorde.type = 'lowpass';
+            filtroAcorde.frequency.value = 2200;
+            filtroAcorde.connect(saida);
+            intervalos.forEach((semitons, i) => {
+                const inicio = t + 0.35 + i * 0.16;
+                const nota = ac.createOscillator();
+                nota.type = 'triangle';
+                nota.frequency.value = tonica * Math.pow(2, semitons / 12);
+                if (isOutroMundo && i === 1) nota.detune.value = -18;
+                const ganhoNota = ac.createGain();
+                ganhoNota.gain.setValueAtTime(0, inicio);
+                ganhoNota.gain.linearRampToValueAtTime(0.06, inicio + 0.02);
+                ganhoNota.gain.exponentialRampToValueAtTime(0.001, inicio + 1.1);
+                nota.connect(ganhoNota); ganhoNota.connect(filtroAcorde);
+                nota.start(inicio); nota.stop(inicio + 1.15);
+            });
         }
 
         function tocarSomAcertoPC() {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator(); const gain = ctx.createGain();
-            osc.type = 'sine'; osc.frequency.setValueAtTime(600, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-            osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.2);
+            if (!window.MixagemAudio) return;
+            const ac = MixagemAudio.contexto();
+            const t = ac.currentTime;
+            const osc = ac.createOscillator(); const gain = ac.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(600, t); osc.frequency.exponentialRampToValueAtTime(1200, t + 0.1);
+            gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+            osc.connect(gain); gain.connect(MixagemAudio.saida('computador')); osc.start(t); osc.stop(t + 0.2);
         }
 
         function carregarPergunta() {
@@ -405,8 +449,7 @@
             pararTemaCaixinhaDeMusica();
             pararSomSuspense();
 
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            const ctxAudio = new AudioContext();
+            const ctxAudio = MixagemAudio.contexto();
 
             dialogBox.classList.remove("texto-assustado", "dialogo-proximo");
             dialogBox.style.display = "block";
@@ -468,7 +511,7 @@
                                     
                                     dialogBox.style.display = "none";
                                     
-                                    tocarSomSusto();
+                                    tocarSomSusto('captura');
 
                                     agendar(() => {
                                         flashScreen.classList.remove("strobe");
@@ -508,8 +551,7 @@
         let tempoAnimacaoChave = 0;
 
         let timeouts = [];
-        let audioSuspenseCtx = null;
-        let suspenseGainNode = null;
+        let somSuspense = null;
 
         function agendar(funcao, tempo) {
             let t = setTimeout(funcao, tempo);
@@ -523,49 +565,48 @@
         // SISTEMA DE ÁUDIO DE SUSPENSE PARA O MINIGAME
         function iniciarSomSuspense() {
             pararSomSuspense();
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            audioSuspenseCtx = new AudioContext();
+            if (!window.MixagemAudio) return;
+            const ac = MixagemAudio.contexto();
+            const t = ac.currentTime;
 
-            const osc1 = audioSuspenseCtx.createOscillator();
+            const osc1 = ac.createOscillator();
             osc1.type = 'sawtooth';
-            osc1.frequency.setValueAtTime(48, audioSuspenseCtx.currentTime); 
+            osc1.frequency.setValueAtTime(48, t);
 
-            const osc2 = audioSuspenseCtx.createOscillator();
+            const osc2 = ac.createOscillator();
             osc2.type = 'sawtooth';
-            osc2.frequency.setValueAtTime(52, audioSuspenseCtx.currentTime); 
+            osc2.frequency.setValueAtTime(52, t);
 
-            const filter = audioSuspenseCtx.createBiquadFilter();
+            const filter = ac.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(180, audioSuspenseCtx.currentTime);
+            filter.frequency.setValueAtTime(180, t);
 
-            suspenseGainNode = audioSuspenseCtx.createGain();
-            suspenseGainNode.gain.setValueAtTime(0, audioSuspenseCtx.currentTime);
-            suspenseGainNode.gain.linearRampToValueAtTime(0.5, audioSuspenseCtx.currentTime + 1.5); 
+            // Antes 0.5: as duas serras somadas saturavam. Agora o drone fica no nível da música, por baixo dela.
+            const ganho = ac.createGain();
+            ganho.gain.setValueAtTime(0, t);
+            ganho.gain.linearRampToValueAtTime(0.07, t + 2.5);
 
             osc1.connect(filter);
             osc2.connect(filter);
-            filter.connect(suspenseGainNode);
-            suspenseGainNode.connect(audioSuspenseCtx.destination);
+            filter.connect(ganho);
+            ganho.connect(MixagemAudio.saida('suspense'));
 
-            osc1.start();
-            osc2.start();
+            osc1.start(t);
+            osc2.start(t);
+            somSuspense = { ac: ac, osc1: osc1, osc2: osc2, ganho: ganho };
         }
 
         function pararSomSuspense() {
-            if (audioSuspenseCtx && suspenseGainNode) {
-                try {
-                    suspenseGainNode.gain.linearRampToValueAtTime(0, audioSuspenseCtx.currentTime + 0.3);
-                    setTimeout(() => {
-                        if (audioSuspenseCtx.state !== 'closed') audioSuspenseCtx.close();
-                        audioSuspenseCtx = null;
-                        suspenseGainNode = null;
-                    }, 350);
-                } catch(e) {
-                    audioSuspenseCtx = null;
-                    suspenseGainNode = null;
-                }
-            }
+            if (!somSuspense) return;
+            const s = somSuspense;
+            somSuspense = null;
+            const t = s.ac.currentTime;
+            s.ganho.gain.cancelScheduledValues(t);
+            s.ganho.gain.setValueAtTime(s.ganho.gain.value, t);
+            s.ganho.gain.linearRampToValueAtTime(0, t + 0.4);
+            s.osc1.stop(t + 0.45);
+            s.osc2.stop(t + 0.45);
+            setTimeout(() => { try { s.ganho.disconnect(); } catch (e) {} }, 600);
         }
         // Música do Mundo Real — atmosfera do Efeito Disney (js/musica/musica-jogo.js)
         function iniciarMusicaMundoReal() {
@@ -581,6 +622,42 @@
         function pararMusicaMundoReal() {
             if (!window.MusicaJogo) return;
             MusicaJogo.pararSe('mundoreal', 0.5);
+        }
+
+        // Música da tela de abertura (livro fechado). Sem permissão de áudio, o navegador
+        // só a libera no primeiro toque, clique ou tecla.
+        function iniciarMusicaAbertura() {
+            if (!window.MusicaJogo) return;
+            MusicaJogo.tocar('mundoreal', { fadeEntrada: 3.0 });
+        }
+
+        // Minigame do Outro Pai: a música muda no mesmo instante do evento da cena (modo 'agora',
+        // ~0,35 s), sem esperar frase nem diálogo. Fades curtos na tensão, longos nos momentos tranquilos.
+        const TRANSICOES_MINIGAME = {
+            outromundo: { fadeSaida: 2.5, fadeEntrada: 1.5 },
+            esperanca:  { fadeSaida: 2.5, fadeEntrada: 1.5 },
+            estranheza: { fadeSaida: 1.2, fadeEntrada: 0.6 },
+            suspense:   { fadeSaida: 0.8, fadeEntrada: 0.3 },
+            perigo:     { fadeSaida: 0.4, fadeEntrada: 0.15 }
+        };
+
+        // Os instrumentos das atmosferas do minigame já são carregados na entrada,
+        // para nenhuma troca esperar o download das amostras.
+        function atmosferaMinigame(atmosfera) {
+            if (!window.MusicaJogo) return;
+            MusicaJogo.preparar(['estranheza', 'suspense', 'perigo', 'esperanca']);
+            const fades = TRANSICOES_MINIGAME[atmosfera];
+            MusicaJogo.tocar(atmosfera, { modo: 'agora', fadeSaida: fades.fadeSaida, fadeEntrada: fades.fadeEntrada });
+        }
+
+        // Ameaça imediata do Outro Pai
+        function perigoMinigame() {
+            atmosferaMinigame('perigo');
+        }
+
+        function interromperMusica(fade) {
+            if (!window.MusicaJogo) return;
+            MusicaJogo.parar(fade);
         }
         // FUNÇÃO DO SOM AMBIENTE (Toca baixinho e continuamente)
         function iniciarSomAmbienteOutroMundo() {
@@ -621,41 +698,94 @@
             oscGrave.start();
             oscDissonante.start();
         }
-        function tocarSomSusto() {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const audioCtx = new AudioContext();
-            
-            const osc1 = audioCtx.createOscillator();
-            const osc2 = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            
-            osc1.type = 'sawtooth';
-            osc2.type = 'square';
-            
-            // Começa agudo e desce brutalmente para um grave pesado
-            osc1.frequency.setValueAtTime(300, audioCtx.currentTime);
-            osc1.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.6);
-            
-            osc2.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc2.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.6);
-            
-            // Volume máximo (0.6) para dar aquele impacto forte que sobressalta o jogador
-            gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
-            
-            osc1.connect(gain);
-            osc2.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc1.start();
-            osc2.start();
-            osc1.stop(audioCtx.currentTime + 0.6);
-            osc2.stop(audioCtx.currentTime + 0.6);
+        // Jumpscare: corpo que despenca com os agudos filtrados, subgrave de impacto e rajada abafada.
+        // Os sustos narrativos ganham também um "grito" na região média (600 Hz–2 kHz): é o que
+        // caixas de notebook e tablet reproduzem — o subgrave sozinho quase não se ouve nelas —
+        // e fica abaixo da faixa estridente (o filtro corta acima de ~3 kHz).
+        // Calibração por tipo de susto (ganhos de cada camada; duração em segundos; corte do ruído em Hz).
+        // Foto: susto de exploração. Outro Pai: clímax do minigame. Captura: o mais forte, com a música em silêncio.
+        const PERFIS_SUSTO = {
+            padrao:   { corpo: 0.21, grito: 0,    sub: 0.32, ruido: 0.13, corteRuido: 2200, duracao: 0.9, espaco: 0.35 },
+            foto:     { corpo: 0.22, grito: 0.22, sub: 0.2,  ruido: 0.11, corteRuido: 1600, duracao: 0.9, espaco: 0.3 },
+            outroPai: { corpo: 0.24, grito: 0.3,  sub: 0.24, ruido: 0.14, corteRuido: 1600, duracao: 1.1, espaco: 0.3 },
+            captura:  { corpo: 0.3,  grito: 0.28, sub: 0.3,  ruido: 0.14, corteRuido: 1600, duracao: 1.5, espaco: 0.3 }
+        };
+
+        function tocarSomSusto(tipo) {
+            if (!window.MixagemAudio) return;
+            const p = PERFIS_SUSTO[tipo] || PERFIS_SUSTO.padrao;
+            const ac = MixagemAudio.contexto();
+            const saida = MixagemAudio.saida('susto');
+            const t = ac.currentTime;
+            const escala = p.duracao / 0.9;
+            MixagemAudio.abrirEspaco(p.espaco, p.duracao + 0.1, 1.8);
+
+            const corpo = ac.createOscillator();
+            corpo.type = 'sawtooth';
+            corpo.frequency.setValueAtTime(240, t);
+            corpo.frequency.exponentialRampToValueAtTime(45, t + 0.7 * escala);
+            const filtroCorpo = ac.createBiquadFilter();
+            filtroCorpo.type = 'lowpass';
+            filtroCorpo.Q.value = 0.9;
+            filtroCorpo.frequency.setValueAtTime(1800, t);
+            filtroCorpo.frequency.exponentialRampToValueAtTime(250, t + 0.7 * escala);
+            const ganhoCorpo = ac.createGain();
+            ganhoCorpo.gain.setValueAtTime(0.0001, t);
+            ganhoCorpo.gain.exponentialRampToValueAtTime(p.corpo, t + 0.012);
+            ganhoCorpo.gain.exponentialRampToValueAtTime(0.001, t + p.duracao);
+            corpo.connect(filtroCorpo); filtroCorpo.connect(ganhoCorpo); ganhoCorpo.connect(saida);
+            corpo.start(t); corpo.stop(t + p.duracao + 0.05);
+
+            const sub = ac.createOscillator();
+            sub.type = 'sine';
+            sub.frequency.setValueAtTime(120, t);
+            sub.frequency.exponentialRampToValueAtTime(38, t + 0.5 * escala);
+            const ganhoSub = ac.createGain();
+            ganhoSub.gain.setValueAtTime(0.0001, t);
+            ganhoSub.gain.exponentialRampToValueAtTime(p.sub, t + 0.008);
+            ganhoSub.gain.exponentialRampToValueAtTime(0.001, t + 0.7 * escala);
+            sub.connect(ganhoSub); ganhoSub.connect(saida);
+            sub.start(t); sub.stop(t + 0.7 * escala + 0.05);
+
+            const ruido = ac.createBufferSource();
+            ruido.buffer = criarRuidoBranco(ac);
+            const filtroRuido = ac.createBiquadFilter();
+            filtroRuido.type = 'lowpass';
+            filtroRuido.frequency.value = p.corteRuido;
+            const ganhoRuido = ac.createGain();
+            ganhoRuido.gain.setValueAtTime(p.ruido, t);
+            ganhoRuido.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+            ruido.connect(filtroRuido); filtroRuido.connect(ganhoRuido); ganhoRuido.connect(saida);
+            ruido.start(t); ruido.stop(t + 0.3);
+
+            if (p.grito > 0) {
+                const passaFaixa = ac.createBiquadFilter();
+                passaFaixa.type = 'bandpass';
+                passaFaixa.frequency.value = 900;
+                passaFaixa.Q.value = 0.9;
+                const corteAgudo = ac.createBiquadFilter();
+                corteAgudo.type = 'lowpass';
+                corteAgudo.frequency.value = 1800;
+                const ganhoGrito = ac.createGain();
+                ganhoGrito.gain.setValueAtTime(0.0001, t);
+                ganhoGrito.gain.exponentialRampToValueAtTime(p.grito, t + 0.01);
+                ganhoGrito.gain.exponentialRampToValueAtTime(0.001, t + p.duracao * 0.85);
+                passaFaixa.connect(corteAgudo); corteAgudo.connect(ganhoGrito); ganhoGrito.connect(saida);
+                // Duas vozes levemente desafinadas entre si: o batimento dá a aspereza do grito
+                [560, 590].forEach((inicio) => {
+                    const voz = ac.createOscillator();
+                    voz.type = 'sawtooth';
+                    voz.frequency.setValueAtTime(inicio, t);
+                    voz.frequency.exponentialRampToValueAtTime(inicio * 0.34, t + p.duracao * 0.7);
+                    voz.connect(passaFaixa);
+                    voz.start(t); voz.stop(t + p.duracao * 0.85 + 0.05);
+                });
+            }
         }
     function tocarSomEstrondo(ctxAudio) {
             const duration = 1.5;
             const tempoBase = ctxAudio.currentTime;
+            MixagemAudio.abrirEspaco(0.4, 1.5, 1.5);
 
             // Sub-grave profundo para o impacto do estrondo
             const osc = ctxAudio.createOscillator();
@@ -663,12 +793,18 @@
             osc.frequency.setValueAtTime(80, tempoBase);
             osc.frequency.exponentialRampToValueAtTime(15, tempoBase + duration);
 
+            // O filtro tira o zumbido agudo da serra e mantém o ronco
+            const filtro = ctxAudio.createBiquadFilter();
+            filtro.type = 'lowpass';
+            filtro.frequency.value = 700;
+
             const gainNode = ctxAudio.createGain();
-            gainNode.gain.setValueAtTime(0.8, tempoBase);
+            gainNode.gain.setValueAtTime(0.5, tempoBase);
             gainNode.gain.exponentialRampToValueAtTime(0.01, tempoBase + duration);
 
-            osc.connect(gainNode);
-            gainNode.connect(ctxAudio.destination);
+            osc.connect(filtro);
+            filtro.connect(gainNode);
+            gainNode.connect(MixagemAudio.saida('impacto'));
             osc.start(tempoBase);
             osc.stop(tempoBase + duration);
         }
@@ -686,23 +822,24 @@
         function tocarSomPortaRealista(ctxAudio) {
             const duration = 2.0;
             const tempoBase = ctxAudio.currentTime;
+            const saida = MixagemAudio.saida('impacto');
             const ruidoSrc = ctxAudio.createBufferSource();
             ruidoSrc.buffer = criarRuidoBranco(ctxAudio);
-            
+
             const filtroRuido = ctxAudio.createBiquadFilter();
             filtroRuido.type = 'bandpass';
             filtroRuido.frequency.setValueAtTime(300, tempoBase);
             filtroRuido.frequency.exponentialRampToValueAtTime(800, tempoBase + duration);
             filtroRuido.Q.value = 15;
-            
+
             const gainRuido = ctxAudio.createGain();
             gainRuido.gain.setValueAtTime(0, tempoBase);
-            gainRuido.gain.linearRampToValueAtTime(0.6, tempoBase + 0.2);
+            gainRuido.gain.linearRampToValueAtTime(0.35, tempoBase + 0.2);
             gainRuido.gain.exponentialRampToValueAtTime(0.01, tempoBase + duration);
 
             ruidoSrc.connect(filtroRuido);
             filtroRuido.connect(gainRuido);
-            gainRuido.connect(ctxAudio.destination);
+            gainRuido.connect(saida);
             ruidoSrc.start(tempoBase);
             ruidoSrc.stop(tempoBase + duration);
 
@@ -710,14 +847,14 @@
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(90, tempoBase);
             osc.frequency.exponentialRampToValueAtTime(30, tempoBase + duration);
-            
+
             const gainOsc = ctxAudio.createGain();
             gainOsc.gain.setValueAtTime(0, tempoBase);
-            gainOsc.gain.linearRampToValueAtTime(0.4, tempoBase + 0.3);
+            gainOsc.gain.linearRampToValueAtTime(0.22, tempoBase + 0.3);
             gainOsc.gain.exponentialRampToValueAtTime(0.01, tempoBase + duration);
 
             osc.connect(gainOsc);
-            gainOsc.connect(ctxAudio.destination);
+            gainOsc.connect(saida);
             osc.start(tempoBase);
             osc.stop(tempoBase + duration);
         }
@@ -726,58 +863,67 @@
         function tocarPassoUnico(ctxAudio, tempoExato, volumeMultiplicador) {
             const duracaoGrave = 0.08;
             const duracaoAgudo = 0.04;
+            const saida = MixagemAudio.saida('impacto');
 
             const oscImpacto = ctxAudio.createOscillator();
             oscImpacto.type = 'sine';
             oscImpacto.frequency.setValueAtTime(120, tempoExato);
             oscImpacto.frequency.exponentialRampToValueAtTime(20, tempoExato + duracaoGrave);
-            
+
             const gainImpacto = ctxAudio.createGain();
             gainImpacto.gain.setValueAtTime(0, tempoExato);
-            gainImpacto.gain.linearRampToValueAtTime(1.0 * volumeMultiplicador, tempoExato + 0.01);
+            gainImpacto.gain.linearRampToValueAtTime(0.35 * volumeMultiplicador, tempoExato + 0.01);
             gainImpacto.gain.exponentialRampToValueAtTime(0.01, tempoExato + duracaoGrave);
 
             oscImpacto.connect(gainImpacto);
-            gainImpacto.connect(ctxAudio.destination);
+            gainImpacto.connect(saida);
             oscImpacto.start(tempoExato);
             oscImpacto.stop(tempoExato + duracaoGrave);
 
             const ruidoSrc = ctxAudio.createBufferSource();
             ruidoSrc.buffer = criarRuidoBranco(ctxAudio);
-            
+
             const filtroSola = ctxAudio.createBiquadFilter();
             filtroSola.type = 'bandpass';
             filtroSola.frequency.value = 1200;
             filtroSola.Q.value = 1.5;
-            
+
             const gainSola = ctxAudio.createGain();
             gainSola.gain.setValueAtTime(0, tempoExato);
-            gainSola.gain.linearRampToValueAtTime(0.5 * volumeMultiplicador, tempoExato + 0.01);
+            gainSola.gain.linearRampToValueAtTime(0.18 * volumeMultiplicador, tempoExato + 0.01);
             gainSola.gain.exponentialRampToValueAtTime(0.01, tempoExato + duracaoAgudo);
 
             ruidoSrc.connect(filtroSola);
             filtroSola.connect(gainSola);
-            gainSola.connect(ctxAudio.destination);
+            gainSola.connect(saida);
             ruidoSrc.start(tempoExato);
             ruidoSrc.stop(tempoExato + duracaoAgudo);
         }
-        function tocarSomErro() {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const audioCtx = new AudioContext();
+        // tipo 'alarme': o "ANORMALIDADE DETECTADA" do minigame, mais presente que o erro do quiz
+        function tocarSomErro(tipo) {
+            if (!window.MixagemAudio) return;
+            const audioCtx = MixagemAudio.contexto();
+            const saida = MixagemAudio.saida('interface');
+            const volume = tipo === 'alarme' ? 0.2 : 0.11;
+            MixagemAudio.abrirEspaco(tipo === 'alarme' ? 0.55 : 0.7, 1.2, 1.0);
             for(let i=0; i<4; i++) {
                 setTimeout(() => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
+                    // O filtro arredonda a aspereza da onda quadrada sem mudar o bipe
+                    const filtro = audioCtx.createBiquadFilter();
+                    filtro.type = 'lowpass';
+                    filtro.frequency.value = 1800;
                     osc.type = 'square';
-                    osc.frequency.setValueAtTime(150, audioCtx.currentTime); 
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
+                    osc.connect(filtro);
+                    filtro.connect(gain);
+                    gain.connect(saida);
                     osc.start();
                     osc.stop(audioCtx.currentTime + 0.2);
-                }, i * 300); 
+                }, i * 300);
             }
         }
 
@@ -787,9 +933,11 @@
             MusicaJogo.tocar('outromundo', { fadeEntrada: 3.0 });
         }
 
+        // Também para as atmosferas que derivam do Outro Mundo no minigame (ex.: Esperança após a pista do Bobinsky).
         function pararTemaCaixinhaDeMusica() {
             if (!window.MusicaJogo) return;
-            MusicaJogo.pararSe('outromundo', 0.3);
+            const atual = MusicaJogo.atmosfera();
+            if (atual && atual !== 'mundoreal') MusicaJogo.parar(0.3);
         }
 
         function dispararJumpscareCenario(imagemAssombrada) {
@@ -798,7 +946,7 @@
             const cenarioAntigo = mapaCasa[cenarioAtual].img;
             mapaCasa[cenarioAtual].img = imagemAssombrada;
             
-            tocarSomSusto();
+            tocarSomSusto('foto');
             flashScreen.classList.add("strobe");
             
             // O susto dura exatamente 800 milissegundos com a imagem assombrada e o piscar ativados em conjunto
@@ -995,6 +1143,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
         }
 
         function mostrarOpcoesPrincipais() {
+            atmosferaMinigame('outromundo');
             // Remove o efeito de jumpscare / escala se ele tiver ficado ativo
             portraitFrame.classList.remove("jumpscare");
             outroPaiPortrait.style.transform = "none"; // Garante o tamanho normal do retrato
@@ -1057,6 +1206,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 dialogBoxLalai.innerHTML = "Eu preciso ir embora. Onde está a saída?"; 
                 fundoDaSala.classList.add("obscuro"); 
                 iniciarSomSuspense(); 
+                atmosferaMinigame('suspense');
                 mudarRetratoOutroPai("assets/images/sinister.png", "obscuro");
                 
                 agendar(() => {
@@ -1087,17 +1237,17 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             }
             else if (opcao === 'B2') {
                 pararSomSuspense();
-                pararTemaCaixinhaDeMusica();
+                perigoMinigame();
                 choiceContainer.style.display = "none"; 
                 dialogBoxLalai.style.display = "none";
                 
-                tocarSomErro();
+                tocarSomErro('alarme');
                 
                 dialogBoxPai.innerHTML = "ANORMALIDADE DETECTADA";
                 dialogBoxPai.style.display = "block";
                 
                 agendar(() => {
-                    tocarSomSusto(); 
+                    tocarSomSusto('outroPai');
                     mudarRetratoOutroPai("assets/images/jumpscare.png", "susto"); 
 
                     dialogBoxPai.classList.add("desespero");
@@ -1109,6 +1259,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                         flashScreen.style.transition = "none"; 
                         flashScreen.style.backgroundColor = "#000";
                         flashScreen.style.opacity = "1";
+                        interromperMusica(1.0);
                         dialogBoxPai.style.display = "none";
                         dialogBoxPai.classList.remove("desespero");
                         
@@ -1155,6 +1306,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                     dialogBoxLalai.style.display = "none"; 
                     agendar(() => {
                         mudarRetratoOutroPai("assets/images/confused.png"); 
+                        atmosferaMinigame('estranheza');
                         dialogBoxPai.innerHTML = "Thor? Ele... eleitor? Mas... Essa piada não faz sentido, nós não precisamos de eleições ou escolhas aqui, Lalai. A sua Outra Mãe já organizou tudo para que este mundo seja perfeito para você.";
                         dialogBoxPai.style.display = "block";
 
@@ -1199,15 +1351,17 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                     dialogBoxLalai.style.display = "none";
                     agendar(() => {
                         mudarRetratoOutroPai("assets/images/sinister.png", "obscuro"); 
+                        atmosferaMinigame('suspense');
                         dialogBoxPai.innerHTML = "A sua Outra Mãe não gosta de crianças ingratas, Lalai. A ingratidão estraga a perfeição.";
                         dialogBoxPai.style.display = "block";
 
                         agendar(() => {
                             dialogBoxPai.innerHTML = "ANORMALIDADE DETECTADA";
-                           tocarSomErro();
+                           perigoMinigame();
+                           tocarSomErro('alarme');
 
                             agendar(() => {
-                                tocarSomSusto();
+                                tocarSomSusto('outroPai');
                                 mudarRetratoOutroPai("assets/images/jumpscare.png", "susto");
 
                                 dialogBoxPai.classList.add("desespero");
@@ -1220,6 +1374,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                                     flashScreen.style.transition = "none"; 
                                     flashScreen.style.backgroundColor = "#000";
                                     flashScreen.style.opacity = "1";
+                                    interromperMusica(1.0);
                                     
                                     // Limpa os estados de desespero e reset exato igual ao B2
                                     dialogBoxPai.style.display = "none";
@@ -1251,6 +1406,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
                                         dialogBox.style.display = "block";
                                         dialogBox.innerHTML = "Lalai: Por pouco... Preciso ter cuidado com o que digo a ele.";
+                                        iniciarTemaCaixinhaDeMusica();
                                         updateGame();
                                     }, 1000);
                                 }, 2200); 
@@ -1312,6 +1468,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                     dialogBoxLalai.style.display = "none";
                     agendar(() => {
                         mudarRetratoOutroPai("assets/images/confused.png");
+                        atmosferaMinigame('estranheza');
                         dialogBoxPai.innerHTML = "Quem mais poderia ser? Não fale bobagens igual aquele Bobinsky, que fica resmungando pelos tubos que é o único que sabe como navegar pelas fendas deste Outro Mundo. Que bobagem!";
                         dialogBoxPai.style.display = "block";
 
@@ -1345,6 +1502,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             else if (opcao === 'C_SAIR') {
                 limparAgendamentos(); 
                 pararSomSuspense();
+                atmosferaMinigame('esperanca');
                 
                 minigameOutroPaiAtivo = false;
                 choiceContainer.style.display = "none";
@@ -1503,8 +1661,8 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             }
             ultimoHashSalvo = null;
 
-            pararMusicaMundoReal();
-            pararTemaCaixinhaDeMusica();
+            // O menu já toca o Mundo Real: manter a mesma música evita corte e reinício
+            iniciarMusicaMundoReal();
 
             cenarioAtual = "escadaria";
             playerX = canvas.width / 2 - 32;
@@ -1594,30 +1752,26 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
         let introAudioCtx = null;
 
         function tocarTeclaIntro() {
-            const AC = window.AudioContext || window.webkitAudioContext;
-            if (!AC) return;
+            if (!window.MixagemAudio) return;
             try {
-                if (!introAudioCtx || introAudioCtx.state === 'closed') {
-                    introAudioCtx = new AC();
-                }
-                if (introAudioCtx.state === 'suspended') introAudioCtx.resume();
-                const sr = introAudioCtx.sampleRate;
+                const ac = MixagemAudio.contexto();
+                const sr = ac.sampleRate;
                 const dur = 0.025;
-                const buf = introAudioCtx.createBuffer(1, Math.floor(sr * dur), sr);
+                const buf = ac.createBuffer(1, Math.floor(sr * dur), sr);
                 const data = buf.getChannelData(0);
                 for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-                const src = introAudioCtx.createBufferSource();
+                const src = ac.createBufferSource();
                 src.buffer = buf;
-                const filt = introAudioCtx.createBiquadFilter();
+                const filt = ac.createBiquadFilter();
                 filt.type = 'bandpass';
                 filt.frequency.value = 2500;
                 filt.Q.value = 1.0;
-                const gain = introAudioCtx.createGain();
-                gain.gain.setValueAtTime(0.1, introAudioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, introAudioCtx.currentTime + dur);
+                const gain = ac.createGain();
+                gain.gain.setValueAtTime(0.1, ac.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
                 src.connect(filt);
                 filt.connect(gain);
-                gain.connect(introAudioCtx.destination);
+                gain.connect(MixagemAudio.saida('interface'));
                 src.start();
             } catch(e) {}
         }
@@ -1726,21 +1880,21 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
         }
 
         function tocarSomItem() {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const audioCtx = new AudioContext();
-            const notas = [523.25, 659.25, 783.99, 1046.50]; 
+            if (!window.MixagemAudio) return;
+            const audioCtx = MixagemAudio.contexto();
+            const saida = MixagemAudio.saida('interface');
+            const notas = [523.25, 659.25, 783.99, 1046.50];
             let tempoAtual = audioCtx.currentTime;
-            
+
             notas.forEach((freq, i) => {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'square';
                 osc.frequency.value = freq;
                 osc.connect(gain);
-                gain.connect(audioCtx.destination);
+                gain.connect(saida);
                 osc.start(tempoAtual + i * 0.1);
-                gain.gain.setValueAtTime(0.1, tempoAtual + i * 0.1);
+                gain.gain.setValueAtTime(0.08, tempoAtual + i * 0.1);
                 gain.gain.exponentialRampToValueAtTime(0.01, tempoAtual + i * 0.1 + 0.1);
                 osc.stop(tempoAtual + i * 0.1 + 0.1);
             });
@@ -2200,6 +2354,7 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
         }
 
         atualizarBotaoPrincipal();
+        iniciarMusicaAbertura();
 
         window.addEventListener('pagehide', salvarProgresso);
         document.addEventListener('visibilitychange', function() {
