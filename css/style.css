@@ -1,0 +1,1138 @@
+        /* LITERATA — fonte narrativa local (arquivos em assets/fonts/) */
+        @font-face {
+            font-family: 'Literata';
+            src: url('../assets/fonts/Literata[opsz,wght].ttf') format('truetype');
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Literata';
+            src: url('../assets/fonts/Literata-Italic[opsz,wght].ttf') format('truetype');
+            font-weight: 100 900;
+            font-style: italic;
+            font-display: swap;
+        }
+
+        .texto-assustado {
+            color: #ff4444 !important;
+            font-style: italic;
+            animation: tremerCaixa 0.1s infinite;
+        }
+
+        @keyframes tremerCaixa {
+            0% { transform: translateX(-50%) translate(2px, 1px) rotate(0deg); }
+            10% { transform: translateX(-50%) translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translateX(-50%) translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translateX(-50%) translate(3px, 2px) rotate(0deg); }
+            40% { transform: translateX(-50%) translate(1px, -1px) rotate(1deg); }
+            50% { transform: translateX(-50%) translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translateX(-50%) translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translateX(-50%) translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translateX(-50%) translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translateX(-50%) translate(1px, 2px) rotate(0deg); }
+            100% { transform: translateX(-50%) translate(1px, -2px) rotate(-1deg); }
+        }
+        body {
+            background-color: #000;
+            color: #fceea7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100dvh;
+            width: 100vw;
+            font-family: 'Courier New', Courier, monospace;
+            touch-action: none;
+            overflow: hidden;
+
+            /* BLOQUEIA A SELEÇÃO DE TEXTO NA PÁGINA INTEIRA */
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            -moz-user-select: none;
+        }
+
+        /* IMPEDE QUE QUALQUER IMAGEM SEJA ARRASTADA */
+        img {
+            -webkit-user-drag: none;
+            user-drag: none;
+            pointer-events: none;
+        }
+
+        /* ECRÃS INICIAIS DA HISTÓRIA */
+        .screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            background-color: #1a1528;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .screen-overlay img {
+            width: 80%;
+            max-width: 800px;
+            height: 50vh; /* Retorna ao tamanho grande original de tela cheia no PC */
+            object-fit: cover; /* Preenche a moldura sem deixar espaços vazios nas bordas */
+            background-color: #2c2440;
+            border: 4px solid #5a4b80;
+            border-radius: 8px;
+            image-rendering: pixelated;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px #000;
+        }
+
+        p.story-text {
+            width: 80%;
+            max-width: 800px;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            background-color: #2c2440;
+            border: 3px solid #5a4b80;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        .btn-main {
+            background-color: #d1506b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8c2a41;
+        }
+
+        .btn-main:hover {
+            background-color: #dc607a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #8c2a41;
+        }
+
+        .btn-main:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        /* ---- MENU: LIVRO FECHADO ---- */
+        #bookCoverClosed {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #menuBookClosed {
+            /* neutraliza .screen-overlay img */
+            width: auto;
+            max-width: min(90vw, 85dvh);
+            height: auto;
+            max-height: 85dvh;
+            object-fit: unset;
+            background-color: transparent;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            margin: 0;
+            image-rendering: auto;
+            transition: transform 0.12s;
+        }
+
+        #bookCoverClosed:hover #menuBookClosed {
+            transform: scale(1.02);
+        }
+
+        /* ---- MENU: LIVRO ABERTO ---- */
+        #bookCoverOpen {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        #bookOpenWrapper {
+            position: relative;
+            /* mantém proporção 3:2 do asset 1536×1024 */
+            width: min(96vw, 96dvh * 1.5);
+            max-width: 1100px;
+        }
+
+        #menuBookOpen {
+            /* neutraliza .screen-overlay img */
+            display: block;
+            width: 100%;
+            height: auto;
+            object-fit: unset;
+            background-color: transparent;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            margin: 0;
+            max-width: unset;
+            image-rendering: auto;
+        }
+
+        #bookPageRight {
+            position: absolute;
+            top: 10%;
+            left: 45%;
+            width: 44%;
+            height: 62%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(10px, 1.2vh, 18px);
+            box-sizing: border-box;
+        }
+
+        .page-ornament {
+            display: block;
+            font-size: clamp(28px, 4vw, 44px);
+            color: #C6A16B;
+            line-height: 1;
+            user-select: none;
+        }
+
+        .menu-item {
+            font-family: 'Literata', Georgia, 'Times New Roman', serif;
+            letter-spacing: 0.08em;
+            text-align: center;
+        }
+
+        .menu-item--primary {
+            /* reset botão */
+            background: none;
+            border: none;
+            padding: 0;
+            /* estilo */
+            font-size: clamp(22px, 3vw, 34px);
+            font-weight: 700;
+            font-style: italic;
+            text-transform: uppercase;
+            color: #C6A16B;
+            cursor: pointer;
+            transition: color 0.15s, transform 0.12s;
+        }
+
+        .menu-item--primary:hover {
+            color: #E9DFD2;
+            transform: scale(1.06);
+        }
+
+        .item-icon {
+            flex-shrink: 0;
+            transition: color 0.15s;
+        }
+
+        .page-divider {
+            font-family: 'Literata', Georgia, serif;
+            font-size: clamp(11px, 1.5vw, 16px);
+            color: #C6A16B;
+            opacity: 0.5;
+            letter-spacing: 0.4em;
+            user-select: none;
+        }
+
+        .menu-item--secondary {
+            font-size: clamp(29px, 4vw, 44px);
+            color: #C6A16B;
+            text-transform: none;
+        }
+
+        .menu-item--inactive {
+            opacity: 0.6;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .menu-item--clicavel {
+            /* reset botão — garante tipografia mesmo em browsers que bloqueiam herança */
+            background: none;
+            border: none;
+            padding: 0;
+            font-family: 'Literata', Georgia, 'Times New Roman', serif;
+            font-size: inherit;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: color 0.15s, transform 0.1s;
+        }
+
+        .menu-item--clicavel:hover {
+            color: #E9DFD2;
+            transform: scale(1.04);
+        }
+
+        /* ---- PAINÉIS DO MENU ---- */
+        .painel-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(33, 23, 45, 0.97);
+            z-index: 500;
+        }
+
+        .painel-conteudo {
+            max-width: 480px;
+            width: 88%;
+            padding: 40px 36px;
+            border: 1px solid #C6A16B;
+            border-radius: 2px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+
+        .painel-titulo {
+            font-family: 'Literata', Georgia, serif;
+            font-size: clamp(20px, 3vw, 28px);
+            font-weight: 700;
+            font-style: italic;
+            color: #C6A16B;
+            margin: 0;
+            letter-spacing: 0.05em;
+        }
+
+        .painel-texto {
+            font-family: 'Literata', Georgia, serif;
+            font-size: clamp(14px, 1.8vw, 17px);
+            color: #E9DFD2;
+            line-height: 1.75;
+            margin: 0;
+            text-align: center;
+        }
+
+        .painel-texto--menor {
+            font-size: clamp(11px, 1.4vw, 14px);
+            opacity: 0.65;
+            font-style: italic;
+        }
+
+        .btn-voltar {
+            font-family: 'Literata', Georgia, serif;
+            font-size: clamp(12px, 1.5vw, 15px);
+            color: #C6A16B;
+            background: none;
+            border: none;
+            cursor: pointer;
+            letter-spacing: 0.15em;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+            margin-top: 4px;
+        }
+
+        .btn-voltar:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 500px) {
+            #bookPageRight {
+                top: 20%;
+                left: 50%;
+                width: 42%;
+                height: 60%;
+                gap: 8px;
+            }
+            .menu-item--primary {
+                font-size: 20px;
+            }
+            .menu-item--secondary {
+                font-size: 23px;
+            }
+            .page-ornament {
+                font-size: 24px;
+            }
+        }
+
+        /* INTRODUÇÃO NARRATIVA */
+        #introNarrativa {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            background: #000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        #introTexto {
+            font-family: 'Literata', Georgia, 'Times New Roman', serif;
+            font-size: clamp(16px, 2vw, 22px);
+            color: #E9DFD2;
+            line-height: 2;
+            max-width: min(640px, 85vw);
+            text-align: center;
+        }
+
+        .intro-para {
+            margin: 0 0 1.4em;
+            min-height: 1em;
+        }
+
+        .intro-para--titulo {
+            font-size: clamp(22px, 2.8vw, 30px);
+            font-weight: 700;
+            font-style: italic;
+            letter-spacing: 0.04em;
+            margin-bottom: 2em;
+        }
+
+        .intro-para--final {
+            font-style: italic;
+            color: #C6A16B;
+            margin-top: 0.4em;
+        }
+
+        /* LAYOUT FULL SCREEN WIDE */
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100dvh;
+            display: none;
+            overflow: hidden;
+            background-color: #0d0914;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            image-rendering: pixelated;
+            z-index: 1;
+        }
+
+        /* GIF DO TÚNEL */
+        #tunelGifOverlay {
+            position: absolute;
+            top: 15vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            height: 55vh;
+            object-fit: cover;
+            background-color: #2c2440;
+            border: 4px solid #5a4b80;
+            border-radius: 8px;
+            display: none;
+            z-index: 20;
+            image-rendering: pixelated;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+#portraitContainer {
+            display: none;
+            position: absolute;
+            top: 15vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            height: 55vh;
+            background-color: #2c2440;
+            border: 4px solid #5a4b80;
+            border-radius: 8px;
+            overflow: hidden; /* Garante que nada sai de dentro da moldura */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 25;
+        }
+
+        #portraitContainer img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            image-rendering: pixelated;
+            filter: grayscale(0%) contrast(100%) brightness(100%);
+        }
+
+        #portraitContainer img.sinistro {
+            filter: grayscale(100%) contrast(160%) brightness(70%) !important;
+            transition: filter 1.2s ease-in-out !important;
+        }
+
+        #imgTopo {
+            clip-path: inset(0 0 100% 0);
+            transition: clip-path 1.4s ease-in-out, filter 1.4s ease-in-out !important;
+        }
+
+        #imgTopo.sinistro {
+            filter: grayscale(100%) contrast(160%) brightness(70%) !important;
+        }
+        /* RETRATO COM MOLDURA PARA APRESENTAÇÃO */
+        #characterPortrait {
+            display: none;
+            position: absolute;
+            top: 15vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            height: 55vh;
+            object-fit: cover;
+            background-color: #2c2440;
+            border: 4px solid #5a4b80;
+            border-radius: 8px;
+            image-rendering: pixelated;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 25;
+
+            filter: grayscale(0%) contrast(100%) brightness(100%);
+            transition: filter 1.5s ease-in-out, opacity 0.8s ease-in-out;
+        }
+
+        #characterPortrait.sinistro {
+            filter: grayscale(100%) contrast(160%) brightness(70%) !important;
+        }
+
+        /* MOLDURA E RETRATO DO MINIGAME DO OUTRO PAI */
+        #portraitFrame {
+            display: none;
+            position: absolute;
+            top: 15vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            height: 50vh;
+            background-color: #2c2440;
+            border: 4px solid #5a4b80;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+            z-index: 25;
+            transition: transform 0.1s ease-in-out;
+        }
+
+        #outroPaiPortrait {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            image-rendering: pixelated;
+            border-radius: 4px;
+            transition: opacity 0.15s ease-in-out, filter 0.15s ease-in-out;
+        }
+
+        .escurecer-retrato {
+            filter: brightness(20%) contrast(150%) sepia(30%) grayscale(60%) !important;
+            opacity: 0.1 !important;
+        }
+
+        .jumpscare {
+            transform: translateX(-50%) scale(1.4) translateY(20px) !important;
+            z-index: 40 !important;
+        }
+
+        #dialogBox {
+            position: absolute;
+            bottom: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 55%;
+            max-width: 550px;
+            min-width: 240px;
+            background-color: rgba(12, 6, 22, 0.93);
+            border: 1px solid rgba(198, 161, 107, 0.42);
+            border-radius: 3px;
+            padding: 14px 22px 12px;
+            font-family: 'Literata', Georgia, 'Times New Roman', serif;
+            font-size: 14px;
+            font-style: italic;
+            color: #E9DFD2;
+            line-height: 1.55;
+            z-index: 30;
+            text-align: center;
+            box-shadow:
+                0 0 0 3px rgba(10, 5, 20, 0.95),
+                0 0 0 4px rgba(198, 161, 107, 0.14),
+                0 6px 24px rgba(0, 0, 0, 0.65);
+            box-sizing: border-box;
+            white-space: pre-wrap;
+        }
+
+        #dialogBox::before,
+        #dialogBox::after {
+            content: '◈';
+            position: absolute;
+            color: rgba(198, 161, 107, 0.4);
+            font-size: 8px;
+            font-style: normal;
+            line-height: 1;
+            pointer-events: none;
+        }
+
+        #dialogBox::before { top: 5px;    left: 7px;  }
+        #dialogBox::after  { bottom: 5px; right: 7px; }
+
+        #dialogBox.dialogo-proximo {
+            bottom: 15vh;
+        }
+
+        @media (max-aspect-ratio: 1/1) {
+            #dialogBox {
+                width: 60%;
+                bottom: 40px;
+                font-size: 13px;
+                padding: 11px 16px 10px;
+            }
+        }
+
+        /* CAIXA DE DIÁLOGO DO OUTRO PAI (MINIGAME) */
+        #dialogBoxPai {
+            display: none;
+            position: absolute;
+            top: 15vh;
+            left: 58%;
+            width: 35%;
+            min-width: 260px;
+            background-color: #fff;
+            border: 4px solid #000;
+            border-radius: 25px;
+            padding: 20px 25px;
+            font-size: 16px;
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+            z-index: 30;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+            white-space: pre-wrap;
+        }
+        #dialogBoxPai::before {
+            content: ""; position: absolute; bottom: -30px; left: 40px;
+            border-width: 30px 20px 0 0; border-style: solid; border-color: #000 transparent transparent transparent;
+        }
+        #dialogBoxPai::after {
+            content: ""; position: absolute; bottom: -23px; left: 44px;
+            border-width: 25px 13px 0 0; border-style: solid; border-color: #fff transparent transparent transparent;
+        }
+
+        #dialogBoxPai.desespero::before { border-color: #ff0000 transparent transparent transparent; }
+        #dialogBoxPai.desespero::after { border-color: #000 transparent transparent transparent; }
+
+        /* BALÃO DA LALAI NO MINIGAME */
+        #dialogBoxLalai {
+            display: none;
+            position: absolute;
+            top: 22vh;
+            right: 58%;
+            width: 30%;
+            min-width: 280px;
+            background-color: #fff;
+            border: 4px solid #000;
+            border-radius: 25px;
+            padding: 20px 25px;
+            font-size: 16px;
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+            z-index: 35;
+            box-shadow: -6px 6px 0px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+            white-space: pre-wrap;
+        }
+        #dialogBoxLalai::before {
+            content: ""; position: absolute; bottom: -30px; right: 40px;
+            border-width: 30px 0 0 20px; border-style: solid; border-color: #000 transparent transparent transparent;
+        }
+        #dialogBoxLalai::after {
+            content: ""; position: absolute; bottom: -23px; right: 44px;
+            border-width: 25px 0 0 13px; border-style: solid; border-color: #fff transparent transparent transparent;
+        }
+
+        /* EFEITO DE ESCURECER O CENÁRIO E RETRATO NO MINIGAME */
+        #gameCanvas {
+            transition: filter 1.5s ease-in-out;
+        }
+        #gameCanvas.obscuro {
+            filter: brightness(20%) contrast(150%) sepia(30%) grayscale(60%) !important;
+        }
+        /* CAIXA DE ESCOLHAS DO MINIGAME */
+        #choiceContainer {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100; /* AUMENTAR O Z-INDEX PARA 100 PARA FICAR POR CIMA DE TUDO */
+            width: 80%;
+            max-width: 800px;
+            background-color: rgba(44, 36, 64, 0.95);
+            border: 3px solid #5a4b80;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        .btn-choice {
+            background-color: rgba(20, 15, 35, 0.95);
+            color: #fceea7;
+            border: 2px solid #5a4b80;
+            padding: 12px 18px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 6px;
+            text-align: left;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .btn-choice:hover { background-color: #3b2f56; }
+        .btn-choice:active { transform: translateY(2px); background-color: #5a4b80; }
+
+        @keyframes tremer {
+            0% { transform: translate(2px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .desespero {
+            animation: tremer 0.1s infinite !important;
+            background-color: #000 !important;
+            color: #ff0000 !important;
+            border-color: #ff0000 !important;
+            font-size: 22px !important;
+            z-index: 50 !important;
+        }
+        #dialogBox.desespero::before { border-color: #ff0000 transparent transparent transparent; }
+        #dialogBox.desespero::after { border-color: #000 transparent transparent transparent; }
+
+        @keyframes piscarLuz {
+            0% { opacity: 0; background-color: transparent; }
+            40% { opacity: 0.95; background-color: black; }
+            60% { opacity: 0; background-color: transparent; }
+            100% { opacity: 0.95; background-color: black; }
+        }
+
+        .strobe {
+            animation: piscarLuz 0.15s infinite !important;
+            z-index: 60;
+        }
+
+        #flashScreen {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+            transition: opacity 0.8s;
+        }
+
+        /* INVENTÁRIO MAIOR */
+        #inventoryBox {
+            position: absolute;
+            top: 30px;
+            left: 25px;
+            z-index: 10;
+            text-align: center;
+            width: 62px;
+        }
+
+        #inventoryLabel {
+            display: block;
+            font-family: 'Literata', Georgia, 'Times New Roman', serif;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: rgba(198, 161, 107, 0.6);
+            user-select: none;
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+
+        #inventorySlot {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(33, 23, 45, 0.28);
+            border: none;
+            box-shadow: none;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #inventorySlot::after {
+            content: none;
+        }
+
+        #inventorySlot img {
+            width: 40px;
+            height: 40px;
+            image-rendering: pixelated;
+            display: none;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 0 5px rgba(198, 161, 107, 0.45));
+        }
+
+        /* JOYSTICK ANALÓGICO */
+        #joystickArea {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10;
+            display: block;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        #joystickArea:active {
+            opacity: 1;
+        }
+
+        #joystickBase {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(16, 9, 28, 0.55);
+            border: 1px solid rgba(198, 161, 107, 0.18);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            user-select: none;
+            position: relative;
+        }
+
+        #joystickKnob {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 35%, rgba(230, 215, 185, 0.92), rgba(185, 155, 115, 0.88));
+            border: 1px solid rgba(198, 161, 107, 0.45);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.15);
+            pointer-events: none;
+            position: absolute;
+            transform: translate(0, 0);
+        }
+
+        /* BOTÃO A */
+        .action-buttons {
+            position: absolute;
+            bottom: 60px;
+            right: 40px;
+            z-index: 10;
+            opacity: 0.85;
+            transition: opacity 0.2s;
+        }
+
+        .action-buttons:active {
+            opacity: 1;
+        }
+
+        .btn-action {
+            background: radial-gradient(circle at 40% 35%, rgba(80, 48, 115, 0.92), rgba(38, 18, 65, 0.9));
+            color: rgba(230, 215, 180, 0.95);
+            border: 1px solid rgba(70, 40, 105, 0.6);
+            border-radius: 50%;
+            width: 82px;
+            height: 82px;
+            font-family: 'Literata', Georgia, serif;
+            font-size: 30px;
+            font-weight: 700;
+            font-style: italic;
+            box-shadow: 0 4px 0 rgba(38, 18, 65, 0.85), 0 2px 12px rgba(90, 50, 140, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            transition: transform 0.08s, box-shadow 0.08s;
+            touch-action: manipulation;
+        }
+
+        .btn-action:hover {
+            background: radial-gradient(circle at 40% 35%, rgba(100, 62, 140, 0.92), rgba(55, 28, 88, 0.9));
+            box-shadow: 0 4px 0 rgba(20, 8, 40, 0.9), 0 2px 16px rgba(70, 40, 110, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-action:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(38, 18, 65, 0.85), inset 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+
+        /* CONTROLES VIRTUAIS: ocultar em dispositivos com ponteiro de precisão (mouse/trackpad) */
+        @media (pointer: fine) {
+            #joystickArea,
+            .action-buttons {
+                display: none !important;
+            }
+        }
+
+        /* CENA E INTERFACE DO COMPUTADOR                       */
+        #introScene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+
+        #imgPC {
+            width: 100%;
+            max-width: 800px;
+            object-fit: contain;
+            image-rendering: pixelated;
+            transition: transform 2s ease-in-out, filter 1s ease-in;
+            transform-origin: 50% 38%;
+        }
+
+        #btnIniciarZoom {
+            position: absolute;
+            bottom: 50px;
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #008080;
+            color: white;
+            border: 4px solid #fff;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #004040;
+            transition: transform 0.1s;
+        }
+
+        .zoom-ativo {
+            transform: scale(4.5);
+            filter: blur(1px) brightness(0.5);
+        }
+
+        #quizInterface {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 210;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #controlesTeste {
+            position: absolute;
+            top: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 30;
+        }
+
+        .btn-controle {
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: #d1506b;
+            color: white;
+            border: 2px solid #8c2a41;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        #monitorBox {
+            background-color: #c0c0c0;
+            border-top: 4px solid #fff;
+            border-left: 4px solid #fff;
+            border-bottom: 4px solid #808080;
+            border-right: 4px solid #808080;
+            padding: 10px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 550px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #pcScreen {
+            width: 100%;
+            height: 430px;
+            background-color: #008080;
+            border: inset 3px #808080;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #janelaHeader {
+            background-color: #000080;
+            color: white;
+            padding: 4px 8px;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #fff;
+        }
+
+        #gameArea {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #perguntaTexto {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            background-color: white;
+            color: black;
+            padding: 15px;
+            border: 2px solid #000;
+            min-height: 60px;
+        }
+
+        .btn-opcao {
+            background-color: #c0c0c0;
+            color: black;
+            border-top: 2px solid #fff;
+            border-left: 2px solid #fff;
+            border-bottom: 2px solid #808080;
+            border-right: 2px solid #808080;
+            padding: 10px;
+            margin: 5px 0;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.1s;
+        }
+
+        #feedbackTexto {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 16px;
+            min-height: 40px;
+            color: #ffff00;
+            text-shadow: 1px 1px 0px #000;
+        }
+
+
+        .outro-mundo-monitor { background-color: #2b0000 !important; border-color: #1a0000 !important; }
+        .outro-mundo-screen { background-color: #000000 !important; border-color: #4a0000 !important; box-shadow: inset 0 0 30px #ff0000; }
+        .outro-mundo-header { background-color: #550000 !important; color: #ffaaaa !important; border-bottom: 2px dashed #ff0000 !important; font-family: 'Times New Roman', serif; letter-spacing: 2px; }
+        .outro-mundo-pergunta { background-color: transparent !important; color: #ff3333 !important; border: 2px dashed #ff0000 !important; font-family: 'Times New Roman', serif; text-shadow: 2px 2px 0px #330000; }
+        .outro-mundo-btn { background-color: #110000 !important; color: #ff6666 !important; border: 1px solid #ff0000 !important; font-family: 'Times New Roman', serif; }
+
+        @keyframes popup {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .popup-animacao { animation: popup 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes glitch {
+            0% { transform: translate(0); text-shadow: 2px 2px 0px #ff0000, -2px -2px 0px #000; }
+            20% { transform: translate(-3px, 2px); color: #fff; }
+            40% { transform: translate(-1px, -2px); color: #ff0000; }
+            60% { transform: translate(3px, 1px); text-shadow: -4px 0px 0px #ff0000; }
+            80% { transform: translate(2px, -1px); color: #fff; }
+            100% { transform: translate(0); }
+        }
+        .glitch-effect { animation: glitch 0.15s infinite; color: #ff0000 !important; border-color: #ff0000 !important; background-color: #1a0000 !important; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-1deg); }
+            50% { transform: translateX(5px) rotate(1deg); }
+            75% { transform: translateX(-5px) rotate(-1deg); }
+        }
+        .shake-screen { animation: shake 0.2s 3; }
+
+        /* BOTÕES HUD (tela cheia + configurações) */
+        .btn-hud {
+            position: absolute;
+            top: 32px;
+            z-index: 20;
+            width: 42px;
+            height: 42px;
+            background-color: rgba(16, 9, 28, 0.55);
+            border: 1px solid rgba(198, 161, 107, 0.22);
+            border-radius: 8px;
+            font-size: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            transition: background-color 0.2s, border-color 0.2s, transform 0.12s;
+            touch-action: manipulation;
+        }
+
+        .btn-hud:hover {
+            background-color: rgba(44, 24, 68, 0.80);
+            border-color: rgba(198, 161, 107, 0.45);
+        }
+
+        .btn-hud:active {
+            transform: scale(0.88);
+        }
+
+        #btnFullscreen { right: 28px; }
+        #btnSettings   { right: 80px; }

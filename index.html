@@ -1,0 +1,149 @@
+﻿<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fan Fiction</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="menuScreen" class="screen-overlay">
+
+        <!-- ESTADO 1: livro fechado — clique revela o livro aberto -->
+        <div id="bookCoverClosed" onclick="document.getElementById('bookCoverClosed').style.display='none'; document.getElementById('bookCoverOpen').style.display='flex';">
+            <img id="menuBookClosed" src="assets/images/menu_book_art.png" alt="Fan Fiction — livro fechado">
+        </div>
+
+        <!-- ESTADO 2: livro aberto com botão Jogar na página direita -->
+        <div id="bookCoverOpen">
+            <div id="bookOpenWrapper">
+                <img id="menuBookOpen" src="assets/images/menu_book_open.png" alt="Fan Fiction — livro aberto">
+                <div id="bookPageRight">
+                    <button id="btnJogar" class="menu-item menu-item--primary" onclick="entrarEmTelaCheia(); iniciarJogar();">
+                        Jogar
+                    </button>
+
+                    <button id="btnNovoJogo" class="menu-item menu-item--secondary menu-item--clicavel" onclick="iniciarNovoJogo();">Novo jogo</button>
+                    <button class="menu-item menu-item--secondary menu-item--clicavel" onclick="document.getElementById('bookCoverOpen').style.display='none'; document.getElementById('panelConfiguracoes').style.display='flex';">Configurações</button>
+                    <button class="menu-item menu-item--secondary menu-item--clicavel" onclick="document.getElementById('bookCoverOpen').style.display='none'; document.getElementById('panelSobre').style.display='flex';">Sobre a história</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAINEL: Sobre a história -->
+        <div id="panelSobre" class="painel-menu">
+            <div class="painel-conteudo">
+                <h2 class="painel-titulo">Sobre a história</h2>
+                <button class="btn-voltar" onclick="document.getElementById('panelSobre').style.display='none'; document.getElementById('bookCoverOpen').style.display='flex';">← Voltar ao menu</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PAINEL: Configurações (fora do menuScreen para ser acessível durante a gameplay) -->
+    <div id="panelConfiguracoes" class="painel-menu">
+        <div class="painel-conteudo">
+            <h2 class="painel-titulo">Configurações</h2>
+            <p class="painel-texto">As configurações do jogo ainda estão sendo preparadas.<br>Em breve será possível ajustar o áudio e outras opções.</p>
+            <button class="btn-voltar" onclick="document.getElementById('panelConfiguracoes').style.display='none'; document.getElementById('bookCoverOpen').style.display='flex';">← Voltar</button>
+        </div>
+    </div>
+
+    <div id="storyScreen" class="screen-overlay" style="display: none;">
+        <h1>O INÍCIO DA AVENTURA</h1>
+        <p class="story-text">
+            Você se mudou recentemente para a misteriosa Casa Cor-de-Rosa com seus pais e seu fiel escudeiro, o Catie. Enquanto explorava os cantos sombrios da casa nova, algo chamou a sua atenção, uma parede com uma pequena porta secreta.
+        </p>
+        <button class="btn-main" onclick="iniciarJogoReal()">EXPLORAR A CASA</button>
+    </div>
+
+    <div id="gameContainer">
+        <button id="btnFullscreen" class="btn-hud" onclick="alternarTelaCheia()"><svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M1 7V1h6M11 1h6v6M17 11v6h-6M7 17H1v-6" stroke="#C6A16B" stroke-width="1.6" stroke-linecap="square"/></svg></button>
+        <button id="btnSettings" class="btn-hud" onclick="document.getElementById('panelConfiguracoes').style.display='flex';"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" stroke="#C6A16B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+        <canvas id="gameCanvas" width="640" height="360"></canvas>
+        <div id="flashScreen"></div>
+        <img id="tunelGifOverlay" src="assets/images/tunel.gif" alt="Túnel Coraline">
+
+        <!-- Contentor do Retrato com suporte a sobreposição para o efeito de varredura -->
+        <div id="portraitContainer">
+            <img id="imgFundo" src="" alt="Fundo">
+            <img id="imgTopo" src="" alt="Topo">
+        </div>
+
+        <!-- Moldura e retrato para o minigame do Outro Pai -->
+        <div id="portraitFrame">
+            <img id="outroPaiPortrait" src="assets/images/happy.png" alt="Outro Pai">
+        </div>
+
+        <!-- Inventário Maior -->
+        <div id="inventoryBox">
+            <span id="inventoryLabel">Objetos</span>
+            <div id="inventorySlot">
+                <img id="keyIcon" src="assets/images/chave.png" alt="Chave">
+            </div>
+        </div>
+
+        <div id="dialogBoxLalai"></div>
+        <div id="dialogBoxPai"></div>
+        <div id="dialogBox">Explore a casa e veja o que o Catie descobre ao redor.</div>
+        <div id="choiceContainer"></div>
+        
+        <!-- Joystick Analógico -->
+        <div id="joystickArea">
+            <div id="joystickBase">
+                <div id="joystickKnob"></div>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button id="btnA" class="btn-action">A</button>
+        </div> 
+
+        <div id="telaPretaFase2" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: black; display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; transition: opacity 3s ease-in-out; pointer-events: none;">
+            <div style="color: #ffaaaa; font-size: 18px; text-align: center; line-height: 1.8; max-width: 80%; text-shadow: 2px 2px 5px rgba(255,0,0,0.5);">
+                Você fez perguntas demais.<br><br>
+                A Lalai foi levada para a escuridão...<br><br>
+                <span style="color: #fff;">O Catie fugiu e acordou sozinho nos dutos de ventilação.</span>
+            </div>
+        </div>
+    </div>
+<!-- CENA INTRODUTÓRIA DO COMPUTADOR -->
+    <div id="introScene">
+        <img id="imgPC" src="" alt="Computador Retro">
+    </div>
+
+    <!-- INTERFACE DO QUIZ DO COMPUTADOR -->
+    <div id="quizInterface">
+        <div id="monitorBox">
+            <div id="pcScreen">
+                <div id="janelaHeader">
+                    <span id="janelaTitulo">Trivia Quiz v1.0</span>
+                    <span onclick="sairDoPC()" style="cursor:pointer">X</span>
+                </div>
+                
+                <div id="gameArea">
+                    <img id="iconePersonagem" src="" style="display: none; width: 220px; height: 220px; margin: 0 auto 15px auto; object-fit: contain;">
+                    <div id="perguntaTexto">Carregando pergunta...</div>
+                    <div id="opcoesContainer"></div>
+                    <div id="feedbackTexto"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- INTRODUÇÃO NARRATIVA -->
+    <div id="introNarrativa">
+        <div id="introTexto"></div>
+    </div>
+
+    <!-- Música (Efeito Disney): samples MusyngKite via soundfont-player; sem rede, o motor usa osciladores -->
+    <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
+    <script src="js/musica/lalai-data.js"></script>
+    <script src="js/musica/lalai-profiles.js"></script>
+    <script src="js/musica/lalai-aprovado.js"></script>
+    <script src="js/musica/music-engine.js"></script>
+    <script src="js/musica/musica-jogo.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
