@@ -477,6 +477,61 @@
             margin-top: 0.4em;
         }
 
+        /* AVISO DE ORIENTAÇÃO (aparelho de toque na vertical) — acima de tudo, bloqueia o toque */
+        #avisoGirar {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 24px;
+            box-sizing: border-box;
+            background-color: #0d0914;
+            text-align: center;
+            touch-action: none;
+        }
+
+        html.orientacao-bloqueada #avisoGirar {
+            display: flex;
+        }
+
+        .aviso-girar-aparelho {
+            width: 46px;
+            height: 78px;
+            border: 3px solid #C6A16B;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 18px;
+            animation: girarAparelho 2.4s ease-in-out infinite;
+        }
+
+        @keyframes girarAparelho {
+            0%, 25% { transform: rotate(0deg); }
+            55%, 100% { transform: rotate(-90deg); }
+        }
+
+        .aviso-girar-titulo {
+            margin: 0;
+            font-family: 'Literata', Georgia, 'Times New Roman', serif;
+            font-size: 22px;
+            font-weight: 700;
+            font-style: italic;
+            color: #C6A16B;
+            letter-spacing: 0.04em;
+        }
+
+        .aviso-girar-texto {
+            margin: 0;
+            max-width: 280px;
+            font-family: 'Literata', Georgia, 'Times New Roman', serif;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #E9DFD2;
+        }
+
         /* LAYOUT FULL SCREEN WIDE */
         #gameContainer {
             position: relative;
@@ -485,15 +540,47 @@
             display: none;
             overflow: hidden;
             background-color: #0d0914;
+
+            /* Medidas do palco 16:9 (as mesmas do #gameCanvas) e das faixas ao redor,
+               usadas para alinhar HUD e controles ao palco. */
+            --palco-l: min(100vw, 177.7778vh);
+            --palco-a: min(100vh, 56.25vw);
+            --faixa-y: calc((100vh - var(--palco-a)) / 2);
+            --faixa-x: calc((100vw - var(--palco-l)) / 2);
+
+            /* HUD: cresce com a altura do palco, entre mínimo e máximo (em 1080 px = tamanhos originais) */
+            --hud-m: clamp(8px, calc(var(--palco-a) * 0.026), 32px);
+            --hud-btn: clamp(34px, calc(32px + var(--palco-a) * 0.009), 48px);
+            --hud-gap: calc(var(--hud-btn) * 0.24);
+            --inv-slot: clamp(40px, calc(37px + var(--palco-a) * 0.012), 60px);
+            --inv-l: calc(var(--inv-slot) + 12px);
+            --inv-a: calc(var(--inv-slot) + 14px);
+
+            /* Controles de toque: pelo menor lado da tela (alcance do polegar), entre mínimo e máximo */
+            --ctl-m: 14px;
+            --joy: clamp(100px, 26vmin, 120px);
+            --btn-a: clamp(64px, 19vmin, 82px);
+        }
+        @supports (height: 100dvh) {
+            #gameContainer {
+                --palco-l: min(100vw, 177.7778dvh);
+                --palco-a: min(100dvh, 56.25vw);
+                --faixa-y: calc((100dvh - var(--palco-a)) / 2);
+            }
         }
 
+        /* PALCO 16:9: o maior retângulo 16:9 que cabe na tela, centralizado; o fundo do
+           #gameContainer forma as faixas. Centralizado com margin (sem transform), para não
+           conflitar com a animação .shake-screen. A interface continua relativa à tela inteira. */
         #gameCanvas {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            inset: 0;
+            margin: auto;
+            width: min(100vw, 177.7778vh);
+            height: min(100vh, 56.25vw);
+            width: min(100vw, 177.7778dvh);
+            height: min(100dvh, 56.25vw);
+            object-fit: contain;
             image-rendering: pixelated;
             z-index: 1;
         }
@@ -827,13 +914,15 @@
         }
 
         /* INVENTÁRIO MAIOR */
+        /* HUD alinhado ao canto do palco: fora do cenário, encostado no palco, quando a faixa
+           comporta o elemento; senão, dentro do canto do palco (como antes, em telas 16:9). */
         #inventoryBox {
             position: absolute;
-            top: 30px;
-            left: 25px;
+            top: max(calc(var(--hud-m) + env(safe-area-inset-top, 0px)), calc(var(--faixa-y) - var(--inv-a) - var(--hud-m)));
+            left: max(calc(var(--hud-m) + env(safe-area-inset-left, 0px)), calc(var(--faixa-x) - var(--inv-l) - var(--hud-m)));
             z-index: 10;
             text-align: center;
-            width: 62px;
+            width: var(--inv-l);
         }
 
         #inventoryLabel {
@@ -850,8 +939,9 @@
         }
 
         #inventorySlot {
-            width: 50px;
-            height: 50px;
+            width: var(--inv-slot);
+            height: var(--inv-slot);
+            margin: 0 auto;
             background-color: rgba(33, 23, 45, 0.28);
             border: none;
             box-shadow: none;
@@ -867,8 +957,8 @@
         }
 
         #inventorySlot img {
-            width: 40px;
-            height: 40px;
+            width: calc(var(--inv-slot) * 0.8);
+            height: calc(var(--inv-slot) * 0.8);
             image-rendering: pixelated;
             display: none;
             position: relative;
@@ -877,10 +967,13 @@
         }
 
         /* JOYSTICK ANALÓGICO */
+        /* Controles: centralizados na faixa quando ela comporta o controle; senão, encostados na
+           borda da tela (invadindo o mínimo possível do cenário). O raio do joystick no JS
+           continua 35 px: a sensibilidade não muda com o tamanho visual. */
         #joystickArea {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
+            bottom: max(calc(var(--ctl-m) + env(safe-area-inset-bottom, 0px)), calc((var(--faixa-y) - var(--joy)) / 2));
+            left: max(calc(var(--ctl-m) + env(safe-area-inset-left, 0px)), calc((var(--faixa-x) - var(--joy)) / 2));
             z-index: 10;
             display: block;
             opacity: 0.8;
@@ -892,8 +985,8 @@
         }
 
         #joystickBase {
-            width: 120px;
-            height: 120px;
+            width: var(--joy);
+            height: var(--joy);
             border-radius: 50%;
             background: rgba(16, 9, 28, 0.55);
             border: 1px solid rgba(198, 161, 107, 0.18);
@@ -907,8 +1000,8 @@
         }
 
         #joystickKnob {
-            width: 50px;
-            height: 50px;
+            width: calc(var(--joy) * 0.42);
+            height: calc(var(--joy) * 0.42);
             border-radius: 50%;
             background: radial-gradient(circle at 40% 35%, rgba(230, 215, 185, 0.92), rgba(185, 155, 115, 0.88));
             border: 1px solid rgba(198, 161, 107, 0.45);
@@ -919,10 +1012,12 @@
         }
 
         /* BOTÃO A */
+        /* Botão A: mesma regra do joystick, do lado direito. Sem faixa inferior, alinhado ao centro
+           do joystick; com faixa inferior (telas 4:3), desce para a faixa, saindo de cima do cenário. */
         .action-buttons {
             position: absolute;
-            bottom: 60px;
-            right: 40px;
+            bottom: max(calc(var(--ctl-m) + env(safe-area-inset-bottom, 0px) + max(0px, calc((var(--joy) - var(--btn-a)) / 2 - var(--faixa-y)))), calc((var(--faixa-y) - var(--btn-a)) / 2));
+            right: max(calc(var(--ctl-m) + env(safe-area-inset-right, 0px)), calc((var(--faixa-x) - var(--btn-a)) / 2));
             z-index: 10;
             opacity: 0.85;
             transition: opacity 0.2s;
@@ -937,10 +1032,10 @@
             color: rgba(230, 215, 180, 0.95);
             border: 1px solid rgba(70, 40, 105, 0.6);
             border-radius: 50%;
-            width: 82px;
-            height: 82px;
+            width: var(--btn-a);
+            height: var(--btn-a);
             font-family: 'Literata', Georgia, serif;
-            font-size: 30px;
+            font-size: calc(var(--btn-a) * 0.366);
             font-weight: 700;
             font-style: italic;
             box-shadow: 0 4px 0 rgba(38, 18, 65, 0.85), 0 2px 12px rgba(90, 50, 140, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.1);
@@ -1167,10 +1262,10 @@
         /* BOTÕES HUD (tela cheia + configurações) */
         .btn-hud {
             position: absolute;
-            top: 32px;
+            top: max(calc(var(--hud-m) + env(safe-area-inset-top, 0px)), calc(var(--faixa-y) - var(--hud-btn) - var(--hud-m)));
             z-index: 20;
-            width: 42px;
-            height: 42px;
+            width: var(--hud-btn);
+            height: var(--hud-btn);
             background-color: rgba(16, 9, 28, 0.55);
             border: 1px solid rgba(198, 161, 107, 0.22);
             border-radius: 8px;
@@ -1193,5 +1288,15 @@
             transform: scale(0.88);
         }
 
-        #btnFullscreen { right: 28px; }
-        #btnSettings   { right: 80px; }
+        /* Mesma regra do inventário, no canto direito do palco */
+        #btnFullscreen { right: max(calc(var(--hud-m) + env(safe-area-inset-right, 0px)), calc(var(--faixa-x) - var(--hud-btn) - var(--hud-m))); }
+        #btnSettings   { right: calc(max(calc(var(--hud-m) + env(safe-area-inset-right, 0px)), calc(var(--faixa-x) - var(--hud-btn) - var(--hud-m))) + var(--hud-btn) + var(--hud-gap)); }
+
+        /* Telas bem mais largas que 16:9 (celulares em paisagem, ultrawide): as faixas laterais
+           são estreitas e altas, então os dois botões ficam empilhados na faixa direita. */
+        @media (min-aspect-ratio: 2/1) {
+            #btnSettings {
+                right: max(calc(var(--hud-m) + env(safe-area-inset-right, 0px)), calc(var(--faixa-x) - var(--hud-btn) - var(--hud-m)));
+                top: calc(max(calc(var(--hud-m) + env(safe-area-inset-top, 0px)), calc(var(--faixa-y) - var(--hud-btn) - var(--hud-m))) + var(--hud-btn) + var(--hud-gap));
+            }
+        }

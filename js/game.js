@@ -543,9 +543,7 @@
         ];
 
         let isStepFrame = false;  
-        let animCounter = 0;      
         let catieStepFrame = false;  
-        let catieAnimCounter = 0;   
         let animandoChave = false;
         let chaveY = 0;
         let tempoAnimacaoChave = 0;
@@ -553,13 +551,41 @@
         let timeouts = [];
         let somSuspense = null;
 
+        // Sequências agendadas podem ser pausadas (aviso de girar o aparelho, js/orientacao.js):
+        // ao pausar, cada uma guarda o tempo que faltava; ao retomar, continua de onde parou.
+        let agendamentosPausados = false;
+
+        function dispararAgendado(item) {
+            timeouts = timeouts.filter(x => x !== item);
+            item.funcao();
+        }
+
         function agendar(funcao, tempo) {
-            let t = setTimeout(funcao, tempo);
-            timeouts.push(t);
+            const item = { funcao: funcao, fim: Date.now() + tempo, restante: tempo, id: null };
+            if (!agendamentosPausados) item.id = setTimeout(() => dispararAgendado(item), tempo);
+            timeouts.push(item);
         }
         function limparAgendamentos() {
-            timeouts.forEach(clearTimeout);
+            timeouts.forEach(item => clearTimeout(item.id));
             timeouts = [];
+        }
+        function pausarAgendamentos() {
+            if (agendamentosPausados) return;
+            agendamentosPausados = true;
+            const agora = Date.now();
+            timeouts.forEach(item => {
+                clearTimeout(item.id);
+                item.restante = Math.max(0, item.fim - agora);
+            });
+        }
+        function retomarAgendamentos() {
+            if (!agendamentosPausados) return;
+            agendamentosPausados = false;
+            const agora = Date.now();
+            timeouts.forEach(item => {
+                item.fim = agora + item.restante;
+                item.id = setTimeout(() => dispararAgendado(item), item.restante);
+            });
         }
 
         // SISTEMA DE ÁUDIO DE SUSPENSE PARA O MINIGAME
@@ -1041,8 +1067,30 @@
             }
         };
 
+        // TRAVA DE TRANSIÇÃO: o comando que trocou de cenário ("cima", "esquerda", "direita"
+        // ou "acao") não troca de novo enquanto continuar pressionado — teclado (repetição
+        // automática), joystick ou tecla de ação. Só libera depois de solto.
+        let comandoTransicaoTravado = null;
+        let teclaAcaoSegurada = false;
+
+        function comandoAindaPressionado(comando) {
+            // Joystick: libera abaixo de 0,3 (o disparo exige 0,6), para tremores do dedo não contarem como novo toque
+            if (comando === "cima") return movingUp || joystickDy < -0.3;
+            if (comando === "esquerda") return movingLeft || joystickDx < -0.3;
+            if (comando === "direita") return movingRight || joystickDx > 0.3;
+            if (comando === "acao") return teclaAcaoSegurada;
+            return false;
+        }
+
+        function liberarComandoTransicaoSeSolto() {
+            if (comandoTransicaoTravado !== null && !comandoAindaPressionado(comandoTransicaoTravado)) {
+                comandoTransicaoTravado = null;
+            }
+        }
+
         function tentarMudarCenario(teclaPressionada) {
-            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo) return; 
+            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo) return;
+            if (teclaPressionada === comandoTransicaoTravado) return;
 
             const salaDados = mapaCasa[cenarioAtual];
 
@@ -1053,6 +1101,7 @@
                     if (porta.gatilho === teclaPressionada || teclaPressionada === "acao") {
                         
                         let origem = cenarioAtual;
+                        comandoTransicaoTravado = teclaPressionada;
                         cenarioAtual = porta.destino;
                         playerX = porta.spawnX !== undefined ? porta.spawnX : 100;
                         dogX = playerX + (isFacingLeft ? 65 : -65);
@@ -1810,6 +1859,8 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
                 function proximo() {
                     if (!ativa) return;
+                    // Com o aviso de girar o aparelho, o texto espera em vez de continuar sem ser visto
+                    if (window.Orientacao && Orientacao.bloqueada) { setTimeout(proximo, 200); return; }
                     if (i >= texto.length) {
                         ativa = false;
                         setTimeout(aoTerminar, para.final ? 2800 : 1600);
@@ -1948,16 +1999,26 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             ctx.restore();
         }
 
-        let ultimoTempo = 0;
+        // null = o loop acabou de (re)começar: o primeiro quadro não move ninguém
+        let ultimoTempo = null;
+        // Referência das animações: o jogo foi ajustado a 60 quadros por segundo
+        const QUADROS_REFERENCIA = 60;
+        let tempoPassoLalai = 0;
+        let tempoPassoCatie = 0;
 
-        function updateGame(tempoAtual = 0) {
-            if (!gameLoopRunning) return;
-            // Calcula o tempo decorrido entre os frames (Delta Time)
-            let deltaTime = (tempoAtual - ultimoTempo) / 1000;
-            ultimoTempo = tempoAtual;
-            
-            // Limita o deltaTime para evitar saltos bruscos se o jogo for minimizado
-            if (isNaN(deltaTime) || deltaTime > 0.1) deltaTime = 0.016;
+        function updateGame(tempoAtual) {
+            if (!gameLoopRunning) { ultimoTempo = null; return; }
+            // Calcula o tempo decorrido entre os frames (Delta Time).
+            // Chamadas manuais (sem horário) retomam o loop sem saltos.
+            const temHorario = typeof tempoAtual === 'number';
+            let deltaTime = (temHorario && ultimoTempo !== null) ? (tempoAtual - ultimoTempo) / 1000 : 0;
+            ultimoTempo = temHorario ? tempoAtual : null;
+
+            // Sem valores inválidos ou negativos; quedas fortes de FPS limitadas a 0,1 s por quadro
+            if (!(deltaTime >= 0)) deltaTime = 0;
+            if (deltaTime > 0.1) deltaTime = 0.1;
+
+            liberarComandoTransicaoSeSolto();
 
             // VERIFICAÇÃO DE PROXIMIDADE AUTOMÁTICA COM O OUTRO PAI NO OFFICE
             if (cenarioAtual === "storage" && chaveUsada && mapaCasa[cenarioAtual].npc && !minigameOutroPaiAtivo) {
@@ -1966,13 +2027,19 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                     iniciarMinigameOutroPai();
                 }
             }
-            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo || pcAtivo) return; 
+            if (emTransicao || faseApresentacao || minigameOutroPaiAtivo || pcAtivo) { ultimoTempo = null; return; }
 
             let isMoving = false;
 
             // Velocidade em pixéis por segundo ajustada ao tempo real
             let velocidadeBase = faseOutroMundo ? 50 : 120;
             let playerSpeed = velocidadeBase * deltaTime;
+
+            // Aviso de girar o aparelho ativo: nenhum comando de movimento vale
+            if (window.Orientacao && Orientacao.bloqueada) {
+                movingLeft = false; movingRight = false; movingUp = false; movingDown = false;
+                joystickDx = 0; joystickDy = 0; teclaAcaoSegurada = false;
+            }
 
             if (movingLeft) { playerX -= playerSpeed; isFacingLeft = true; isMoving = true; }
             if (movingRight) { playerX += playerSpeed; isFacingLeft = false; isMoving = true; }
@@ -1999,15 +2066,16 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
                 }
             }
 
+            // Passos trocam a cada 16 quadros de 60 FPS (~0,27 s), em qualquer taxa de quadros
             if (isMoving) {
-                animCounter++;
-                if (animCounter > 15) { 
+                tempoPassoLalai += deltaTime;
+                if (tempoPassoLalai >= 16 / QUADROS_REFERENCIA) {
                     isStepFrame = !isStepFrame;
-                    animCounter = 0;
+                    tempoPassoLalai = 0;
                 }
             } else {
-                isStepFrame = false; 
-                animCounter = 0;
+                isStepFrame = false;
+                tempoPassoLalai = 0;
             }
             // SENSOR 1: Escadaria Assombrada
             if (faseOutroMundo && cenarioAtual === "escadaria" && !sustoEscadariaFeito && !jumpScareCenarioAtivo) {
@@ -2029,8 +2097,9 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             }
 
             if (faseOutroMundo && cenarioAtual === "sala" && missaoBobinskyAtiva && !emboscadaSalaDisparada) {
-                if (playerX > 150) { 
+                if (playerX > 150) {
                     dispararEmboscadaSala();
+                    ultimoTempo = null;
                     return;
                 }
             }
@@ -2083,18 +2152,20 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             let posicaoAlvoCao = playerX + dogPosOffset;
             let dogMovendo = Math.abs(posicaoAlvoCao - dogX) > 0.5 || Math.abs((playerY + 25) - dogY) > 0.5;
 
-            dogX += (posicaoAlvoCao - dogX) * 0.1; 
-            dogY += ((playerY + 25) - dogY) * 0.1;
+            // Catie cobre 10% da distância por quadro de 60 FPS; a fórmula mantém isso em qualquer FPS
+            const seguimentoCatie = 1 - Math.pow(1 - 0.1, deltaTime * QUADROS_REFERENCIA);
+            dogX += (posicaoAlvoCao - dogX) * seguimentoCatie;
+            dogY += ((playerY + 25) - dogY) * seguimentoCatie;
 
             if (dogMovendo) {
-                catieAnimCounter++;
-                if (catieAnimCounter > 15) { 
+                tempoPassoCatie += deltaTime;
+                if (tempoPassoCatie >= 16 / QUADROS_REFERENCIA) {
                     catieStepFrame = !catieStepFrame;
-                    catieAnimCounter = 0;
+                    tempoPassoCatie = 0;
                 }
             } else {
                 catieStepFrame = false;
-                catieAnimCounter = 0;
+                tempoPassoCatie = 0;
             }
 
             let currentImgDog = catieStepFrame ? imgDogPasso : imgDog;
@@ -2125,8 +2196,10 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             ctx.restore(); 
 
             if (animandoChave) {
-                tempoAnimacaoChave++;
-                chaveY -= 1.5; 
+                // Quadros equivalentes a 60 FPS: mesma subida, duração (1 s) e piscar em qualquer taxa de quadros
+                const quadrosChave = deltaTime * QUADROS_REFERENCIA;
+                tempoAnimacaoChave += quadrosChave;
+                chaveY -= 1.5 * quadrosChave;
 
                 ctx.save();
                 let opacidade = 1 - (tempoAnimacaoChave / 60);
@@ -2156,7 +2229,8 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
 
         // Eventos de Teclado (PC)
         window.addEventListener('keydown', (e) => {
-            if (faseApresentacao && (e.key === ' ' || e.key === 'Space' || e.key === 'Enter' || e.key === 'e' || e.key === 'E')) {
+            if (e.key === 'e' || e.key === 'E' || e.key === ' ') teclaAcaoSegurada = true;
+            if (faseApresentacao &&(e.key === ' ' || e.key === 'Space' || e.key === 'Enter' || e.key === 'e' || e.key === 'E')) {
                 executarAcaoBotaoA(e);
                 return;
             }
@@ -2196,6 +2270,8 @@ function mudarRetratoOutroPai(novaSrc, efeito = "rapido") {
             if(e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') movingRight = false;
             if(e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') movingUp = false;
             if(e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') movingDown = false;
+            if (e.key === 'e' || e.key === 'E' || e.key === ' ') teclaAcaoSegurada = false;
+            liberarComandoTransicaoSeSolto();
         });
 
         // AÇÃO DO BOTÃO A
